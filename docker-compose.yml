@@ -1,0 +1,44 @@
+# Local development services for the cloud VM. Ports bind to 127.0.0.1 only: never publish these
+# databases (or a FalkorDB browser UI) to the internet. Credentials are local synthetic-data values.
+name: company-brain
+
+services:
+  postgres:
+    image: postgres:16.15-alpine
+    environment:
+      POSTGRES_USER: company_brain
+      POSTGRES_PASSWORD: company_brain_dev
+      POSTGRES_DB: company_brain
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U company_brain -d company_brain"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    restart: unless-stopped
+
+  falkordb:
+    # Tested version; see docs/dev-environment.md. Bump only after rerunning pnpm check.
+    image: falkordb/falkordb:v4.20.7
+    environment:
+      # The image otherwise starts its web browser UI; we do not need or expose it.
+      BROWSER: "0"
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - falkordb-data:/var/lib/falkordb/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  falkordb-data:

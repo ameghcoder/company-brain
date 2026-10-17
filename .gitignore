@@ -147,3 +147,13 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Company Brain
+# Local environment files hold credentials; only .env.example is committed (see rule above).
+.env*.local
+# Transient agent notes, bootstrap/check logs, and generated check outputs.
+.temp/
+eval/reports/
+test-results/
+playwright-report/
+next-env.d.ts
