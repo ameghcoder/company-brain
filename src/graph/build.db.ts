@@ -33,7 +33,7 @@ export type Snapshot = {
 
 // One consistent read of everything a build projects: entities, each document's selected
 // version and its chunks (current chunker versions only), and approved claims.
-export async function readSnapshot(client: pg.PoolClient, chunkerVersions: string[]): Promise<Snapshot> {
+export async function readSnapshot(client: pg.PoolClient, chunkerVersions: string[], claimOrigins: Claim["origin"][]): Promise<Snapshot> {
   await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
   try {
     const company = await client.query<{ company_id: string }>("SELECT company_id FROM app_state");
@@ -77,7 +77,8 @@ export async function readSnapshot(client: pg.PoolClient, chunkerVersions: strin
     );
     const claims = await client.query(
       `SELECT claim_id, kind, project_id, topic, origin, review_status, review_note, payload, evidence, recorded_at
-       FROM claims WHERE review_status = 'approved' ORDER BY claim_id`,
+       FROM claims WHERE review_status = 'approved' AND origin = ANY($1) ORDER BY claim_id`,
+      [claimOrigins],
     );
     await client.query("COMMIT");
 

@@ -154,6 +154,7 @@ vite.config.ts.timestamp-*
 # Transient agent notes, bootstrap/check logs, and generated check outputs.
 .temp/
 eval/reports/
+review/reports/
 test-results/
 playwright-report/
 next-env.d.ts

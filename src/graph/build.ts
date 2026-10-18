@@ -7,9 +7,17 @@ import { deriveOwnershipIntervals, type OwnershipConflict } from "@/graph/owners
 import { createIndexes, projectSnapshot } from "@/graph/project";
 import { CHUNKER_VERSIONS } from "@/ingest/chunk";
 import type { TopicRegistry } from "@/ingest/registry";
-import type { OwnershipClaim } from "@/contracts/claims";
+import type { Claim, OwnershipClaim } from "@/contracts/claims";
 
 export const GRAPH_SCHEMA_VERSION = 1;
+
+// Which reviewed claims a build projects. Fixture seeding and real extraction stay separate paths;
+// structured roster claims belong to both.
+export const CLAIM_SETS = {
+  fixture: ["structured", "fixture_reviewed"],
+  extracted: ["structured", "extracted"],
+} as const satisfies Record<string, Claim["origin"][]>;
+export type ClaimSet = keyof typeof CLAIM_SETS;
 
 export type BuildOutcome = { buildId: string; graphName: string; conflicts: OwnershipConflict[] };
 
@@ -25,11 +33,11 @@ export function buildGraphName(buildId: string): string {
 
 // Projects approved Postgres records into a brand-new graph. Makes no model or embedding calls.
 // Leaves the build "built" on success and "failed" (with its graph kept for inspection) otherwise.
-export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicRegistry): Promise<BuildOutcome> {
+export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicRegistry, claimSet: ClaimSet = "fixture"): Promise<BuildOutcome> {
   const client = await pool.connect();
   let snapshot: Snapshot;
   try {
-    snapshot = await readSnapshot(client, Object.values(CHUNKER_VERSIONS));
+    snapshot = await readSnapshot(client, Object.values(CHUNKER_VERSIONS), [...CLAIM_SETS[claimSet]]);
   } finally {
     client.release();
   }
@@ -53,6 +61,7 @@ export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicReg
       company_id: snapshot.companyId,
       chunker_versions: CHUNKER_VERSIONS,
       topics_revision: topics.revision,
+      claim_set: claimSet,
       // Vector index and chunk embeddings arrive with the embedding cache (LOC-3).
       vectors: "absent",
     },
@@ -97,6 +106,17 @@ function assertSnapshotConsistent(snapshot: Snapshot): void {
       if (!chunkIds.has(item.chunk_id)) problems.push(`${claim.claim_id} cites ${item.chunk_id}, which is not in a selected version`);
     }
     if (!entityIds.has(claim.project_id)) problems.push(`${claim.claim_id} references unknown project ${claim.project_id}`);
+  }
+  // Supersessions and handoffs must point at claims inside the same projected set.
+  const claimIds = new Set(snapshot.claims.map((claim) => claim.claim_id));
+  for (const claim of snapshot.claims) {
+    const refs =
+      claim.kind === "supersession"
+        ? [claim.payload.new_decision_id, claim.payload.old_decision_id]
+        : claim.kind === "ownership" && claim.payload.handoff_from
+          ? [claim.payload.handoff_from]
+          : [];
+    for (const ref of refs) if (!claimIds.has(ref)) problems.push(`${claim.claim_id} references ${ref}, which is not in this claim set`);
   }
   if (problems.length) throw new Error(`Snapshot is inconsistent; re-run pnpm seed:claims:\n  ${problems.join("\n  ")}`);
 }

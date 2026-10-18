@@ -1,0 +1,4 @@
+{
+  "about": "Reviewer decisions for claims produced by real extraction runs (origin: extracted). Claim IDs come from `pnpm review:report`; they change only when a new extraction run replaces the old one. Actions: approve, reject (note required), correct (note and `set` required). Empty until the model provider works (issue #2) and real runs have been reviewed.",
+  "reviews": []
+}

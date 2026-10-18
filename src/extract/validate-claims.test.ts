@@ -124,7 +124,7 @@ describe("claim validation", () => {
 
   it("rejects a proposal used as a replaced or replacing decision", () => {
     const errors = validateClaims([decision("dec-a"), proposal("prop-b"), supersession("sup-p", "prop-b", "dec-a")], entities, topics);
-    assert.ok(errors.some((error) => /new_decision prop-b is not an approved decided decision/.test(error)), errors.join("\n"));
+    assert.ok(errors.some((error) => /new_decision prop-b is not a decided decision that can be referenced/.test(error)), errors.join("\n"));
   });
 
   it("rejects unknown entities and topics outside the project registry", () => {
@@ -146,6 +146,13 @@ describe("claim validation", () => {
   it("rejects handoffs that point backwards in time or at another role", () => {
     const errors = validateClaims([ownership("own-late", "2026-11-01"), ownership("own-early", "2026-10-01", "own-late")], entities, topics);
     assert.ok(errors.some((error) => /does not start before this assignment/.test(error)));
+  });
+
+  it("lets pending claims reference pending ones but keeps the approved set self-contained", () => {
+    const pendingOld = { ...decision("dec-old"), review_status: "pending" as const };
+    assert.deepEqual(validateClaims([pendingOld, { ...decision("dec-new"), review_status: "pending" as const }, { ...supersession("sup-p", "dec-new", "dec-old"), review_status: "pending" as const }], entities, topics), []);
+    const errors = validateClaims([pendingOld, decision("dec-new"), supersession("sup-a", "dec-new", "dec-old")], entities, topics);
+    assert.ok(errors.some((error) => /sup-a: old_decision dec-old is not approved/.test(error)), errors.join("\n"));
   });
 
   it("only checks project and topic for rejected claims", () => {

@@ -99,3 +99,11 @@ export function providerConfig(): ProviderConfig {
     embeddingDimensions: env.OPENAI_EMBEDDING_DIMENSIONS,
   };
 }
+
+const extractionModelSchema = z.object({ OPENAI_TEXT_MODEL: z.preprocess(emptyAsUndefined, z.string().min(1)) });
+
+// The model ID alone (no credentials) identifies extraction runs, so stored runs can be
+// re-interpreted offline without provider access.
+export function extractionModelId(): string {
+  return parseEnv(extractionModelSchema, process.env).OPENAI_TEXT_MODEL;
+}
