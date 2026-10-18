@@ -7,10 +7,11 @@ company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.
 
 ## Current milestone and scope
 
-- **Now: Milestone 2 (LOC-2) dataset and graph vertical slice**, delivered as three issues opened in turn
-  (dataset/schema/seeding #4, graph build and activation #5, fixed graph tools #6). LOC-1 is done.
-- Do **not** start LLM extraction, embeddings, natural-language answering, or the final UI (LOC-3 and
-  later) until the owner asks for the next milestone. Plan: [docs/project-plan.md](docs/project-plan.md).
+- **Now: Milestone 3 (LOC-3), provider-independent parts only** (owner's choice while #2 blocks model
+  access): extraction runs, linking, and review (#8), embedding cache and vector projection (#9).
+  Real extraction runs, real embeddings, and extracted-vs-expected comparison wait for #2.
+- LOC-1 and LOC-2 are done and merged. Do **not** start natural-language answering or the final UI
+  (LOC-4 and later) until the owner asks. Plan: [docs/project-plan.md](docs/project-plan.md).
 - Small tasks inside an authorized milestone don't need separate approval. Stop at the milestone boundary
   and report.
 - New ideas go into `docs/project-plan.md` as `LOC-n` items, not into GitHub issues or code.
@@ -94,6 +95,11 @@ pnpm data:load        # registry + ingest + reviewed claims into the dev databas
 pnpm graph:publish    # fresh graph build -> integrity checks -> activate only if all pass
 pnpm eval             # all independent expected-answer cases against the active build (JSON report)
 pnpm demo             # the demo questions as structured requests, rendered with evidence
+pnpm review:report    # re-interpret stored extraction runs offline -> review/reports/*.md (no writes)
+pnpm review:apply     # same, applying fixtures/lumen-freight/review/extracted-approvals.json
+pnpm graph:publish --claims extracted   # build from structured + approved extracted claims
+pnpm extract          # PAID model calls for windows without a parsed run; NOT VERIFIED until #2
+pnpm embed            # PAID embeddings for chunks missing from the cache; NOT VERIFIED until #2
 pnpm typecheck && pnpm lint && pnpm build
 CHECK_PROVIDER=1 pnpm check   # adds paid minimal provider check (needs valid provider config)
 ```
@@ -113,7 +119,8 @@ sources by hand and must never be regenerated from claims or graph output.
   `NEXT_PUBLIC_*` for secrets, never print env values, and never echo config values in errors (they may
   be secrets in the wrong variable).
 - Model calls go through `src/provider/openai-transport.ts`. Never call providers from build or
-  bootstrap.
+  bootstrap. Tests use scripted test doubles for the model (never for databases) and must not be
+  presented as evidence of real extraction quality.
 - `NODE_ENV=development` is exported in the cloud VM, so `build`/`start` scripts force production.
 - Comments are short and explain non-obvious reasons, not what the code says.
 - Use shadcn/ui components when the UI needs one. Don't hand-roll an equivalent, and don't add UI

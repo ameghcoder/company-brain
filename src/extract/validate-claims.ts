@@ -10,8 +10,9 @@ const ALLOWED_ROLES: Record<Claim["kind"], EvidenceRole[]> = {
 };
 
 // Consistency rules applied before any claim is stored. Rejected claims only need a valid project
-// and topic (they are kept for audit); pending and approved claims get every check, and references
-// between claims must point at approved claims.
+// and topic (they are kept for audit); pending and approved claims get every check. A claim may
+// reference any claim that is not rejected, but an approved claim may only reference approved ones,
+// so the approved set is always self-contained.
 export function validateClaims(
   claims: Claim[],
   entities: Map<string, KnownEntity>,
@@ -26,7 +27,9 @@ export function validateClaims(
     seen.add(claim.claim_id);
   }
 
-  const approved = new Map(claims.filter((claim) => claim.review_status === "approved").map((claim) => [claim.claim_id, claim]));
+  const referable = new Map(claims.filter((claim) => claim.review_status !== "rejected").map((claim) => [claim.claim_id, claim]));
+  const referenceProblem = (claim: Claim, target: Claim) =>
+    claim.review_status === "approved" && target.review_status !== "approved" ? "is not approved" : undefined;
 
   for (const claim of claims) {
     if (entities.get(claim.project_id)?.kind !== "project") {
@@ -72,9 +75,11 @@ export function validateClaims(
         }
         if (payload.handoff_from) {
           needRole("handoff", "a handoff");
-          const previous = approved.get(payload.handoff_from);
+          const previous = referable.get(payload.handoff_from);
           if (!previous || previous.kind !== "ownership") {
-            fail(claim, `handoff_from ${payload.handoff_from} is not an approved ownership claim`);
+            fail(claim, `handoff_from ${payload.handoff_from} is not an ownership claim that can be referenced`);
+          } else if (referenceProblem(claim, previous)) {
+            fail(claim, `handoff_from ${payload.handoff_from} ${referenceProblem(claim, previous)}`);
           } else if (previous.project_id !== claim.project_id || previous.topic !== claim.topic) {
             fail(claim, `handoff_from ${payload.handoff_from} is for a different project or role`);
           } else if (previous.payload.effective_from.utc >= payload.effective_from.utc) {
@@ -90,9 +95,11 @@ export function validateClaims(
         const { new_decision_id: newId, old_decision_id: oldId } = claim.payload;
         if (newId === oldId) fail(claim, "a decision cannot supersede itself");
         for (const [label, id] of [["new_decision", newId], ["old_decision", oldId]] as const) {
-          const decision = approved.get(id);
+          const decision = referable.get(id);
           if (!decision || decision.kind !== "decision" || decision.payload.lifecycle !== "decided") {
-            fail(claim, `${label} ${id} is not an approved decided decision`);
+            fail(claim, `${label} ${id} is not a decided decision that can be referenced`);
+          } else if (referenceProblem(claim, decision)) {
+            fail(claim, `${label} ${id} ${referenceProblem(claim, decision)}`);
           } else if (decision.project_id !== claim.project_id || decision.topic !== claim.topic) {
             // Replacement is only valid within the same project and topic.
             fail(claim, `${label} ${id} is for ${decision.project_id}/${decision.topic}, not ${claim.project_id}/${claim.topic}`);
@@ -103,8 +110,8 @@ export function validateClaims(
     }
   }
 
-  errors.push(...findSupersessionCycles(claims.filter((claim) => claim.review_status === "approved")));
-  errors.push(...findHandoffCycles(claims.filter((claim): claim is OwnershipClaim => claim.kind === "ownership" && claim.review_status === "approved")));
+  errors.push(...findSupersessionCycles([...referable.values()]));
+  errors.push(...findHandoffCycles([...referable.values()].filter((claim): claim is OwnershipClaim => claim.kind === "ownership")));
   return errors;
 }
 

@@ -35,9 +35,13 @@ similarityFunction: 'cosine'}` with `db.idx.vector.queryNodes`. With cosine, the
 | `pnpm check:services` | Postgres + FalkorDB smoke checks only. |
 | `pnpm test` | Unit tests plus integration tests against the real services. Integration tests reset and use a separate database named `<dev database>_test` (override with `DATABASE_URL_TEST`); development data is never touched. |
 | `pnpm data:load` | Seeds the registry, ingests the fixture sources, and seeds reviewed claims in one transaction. Idempotent. Steps also run alone: `pnpm seed:registry`, `pnpm ingest`, `pnpm seed:claims`. |
-| `pnpm graph:publish` | Rebuilds a fresh graph from approved Postgres records, checks it, and activates it only if every check passes. Also separately: `pnpm graph:rebuild`, `pnpm graph:check <buildId>`, `pnpm graph:activate <buildId>`, `pnpm graph:status`. No provider calls. |
+| `pnpm graph:publish [--claims fixture\|extracted]` | Rebuilds a fresh graph from approved Postgres records, checks it, and activates it only if every check passes. Also separately: `pnpm graph:rebuild`, `pnpm graph:check <buildId>`, `pnpm graph:activate <buildId>`, `pnpm graph:status`. No provider calls. |
 | `pnpm eval` | Runs every case in `fixtures/lumen-freight/expected/answers.json` against the active build and writes `eval/reports/eval-<time>.json` (gitignored). Non-zero exit on any failure. |
 | `pnpm demo` | Prints deterministic answers, evidence excerpts, and notes for the demo questions. |
+| `pnpm extract` | **Paid; not verified (#2).** Calls the model for every window without a `parsed` run (raw output stored before parsing), then stores pending extracted claims and writes a review report to `review/reports/` (gitignored). Needs full provider configuration. |
+| `pnpm review:report` | Re-interprets stored runs offline (no calls, no writes) and writes the review report. Needs only `OPENAI_TEXT_MODEL` to select runs. |
+| `pnpm review:apply` | Like `review:report`, but applies `fixtures/lumen-freight/review/extracted-approvals.json` and stores the claims. |
+| `pnpm embed` | **Paid; not verified (#2).** Embeds selected chunks that have no cached vector for `OPENAI_EMBEDDING_MODEL`/`OPENAI_EMBEDDING_DIMENSIONS`, validating every vector before storing a batch. |
 | `pnpm db:migrate` | Applies pending `src/db/migrations/*.sql` (advisory-locked, one transaction each). |
 | `pnpm check:provider` | **Paid, opt-in.** One tiny completion and one embedding. Also runs inside `pnpm check` when `CHECK_PROVIDER=1`. |
 | `pnpm dev` / `pnpm build` / `pnpm start` | Next.js on 127.0.0.1. Build and start force `NODE_ENV=production` because the cloud VM exports `NODE_ENV=development`. |
@@ -85,7 +89,8 @@ Compose, its hosts become the service names `postgres` and `falkordb` instead of
 
 `OPENAI_AUTH_MODE` must be the literal `network_secret` or `api_key` (see
 [ADR 0003](adr/0003-provider-auth-modes-and-fetch-transport.md)). `OPENAI_TEXT_MODEL`,
-`OPENAI_EMBEDDING_MODEL`, and `OPENAI_EMBEDDING_DIMENSIONS` have no defaults and are recorded only
+`OPENAI_EMBEDDING_MODEL`, and `OPENAI_EMBEDDING_DIMENSIONS` have no defaults. The two embedding
+settings also tell graph builds which cached vectors to project (set both or neither); they and are recorded only
 after `pnpm check:provider` passes. Network secrets are not available to the environment setup script,
 so run provider checks after the session starts. Provider access is currently **not verified**
 (GitHub issue #2).

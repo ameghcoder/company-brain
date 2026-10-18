@@ -1,7 +1,7 @@
 import { closePool, getPool } from "@/db/pool";
 import { activateGraph, publishGraph } from "@/graph/activate";
 import { readActiveBuild } from "@/graph/build.db";
-import { rebuildGraph } from "@/graph/build";
+import { CLAIM_SETS, rebuildGraph, type ClaimSet } from "@/graph/build";
 import { checkGraph, type CheckReport } from "@/graph/check";
 import { connectFalkorDB } from "@/graph/client";
 import { DEFAULT_FIXTURE_ROOT } from "@/ingest/load";
@@ -9,9 +9,12 @@ import { loadManifest } from "@/ingest/manifest";
 import { readTopicRegistry } from "@/ingest/registry";
 import { printResults } from "@/smoke/check-result";
 
-// Usage: tsx scripts/graph.ts <rebuild | check <buildId> | activate <buildId> | publish | status>
+// Usage: tsx scripts/graph.ts <rebuild | check <buildId> | activate <buildId> | publish | status> [--claims fixture|extracted]
 // Builds read Postgres only; no model or embedding provider is called.
-const [command, buildId] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const claimsFlag = args.indexOf("--claims");
+const claimSetArg = claimsFlag >= 0 ? args[claimsFlag + 1] : "fixture";
+const [command, buildId] = args.filter((_, index) => claimsFlag < 0 || (index !== claimsFlag && index !== claimsFlag + 1));
 
 function printReport(report: CheckReport) {
   printResults(report.checks);
@@ -20,14 +23,16 @@ function printReport(report: CheckReport) {
 }
 
 async function main(): Promise<boolean> {
+  if (!claimSetArg || !(claimSetArg in CLAIM_SETS)) throw new Error(`--claims must be one of ${Object.keys(CLAIM_SETS).join(", ")}`);
+  const claimSet = claimSetArg as ClaimSet;
   const pool = getPool();
   const db = await connectFalkorDB();
   try {
     const topics = await readTopicRegistry(await loadManifest(DEFAULT_FIXTURE_ROOT));
     switch (command) {
       case "rebuild": {
-        const build = await rebuildGraph(pool, db, topics);
-        console.log(`built ${build.buildId} -> ${build.graphName} (not active; run check, then activate)`);
+        const build = await rebuildGraph(pool, db, topics, claimSet);
+        console.log(`built ${build.buildId} -> ${build.graphName} from the ${claimSet} claim set (not active; run check, then activate)`);
         return true;
       }
       case "check": {
@@ -44,7 +49,7 @@ async function main(): Promise<boolean> {
         return true;
       }
       case "publish": {
-        const result = await publishGraph(pool, db, topics);
+        const result = await publishGraph(pool, db, topics, claimSet);
         printReport(result.report);
         console.log(
           result.activated
@@ -59,7 +64,7 @@ async function main(): Promise<boolean> {
         return true;
       }
       default:
-        console.error("usage: tsx scripts/graph.ts <rebuild | check <buildId> | activate <buildId> | publish | status>");
+        console.error("usage: tsx scripts/graph.ts <rebuild | check <buildId> | activate <buildId> | publish | status> [--claims fixture|extracted]");
         return false;
     }
   } finally {

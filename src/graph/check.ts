@@ -1,6 +1,7 @@
 import type { FalkorDB, Graph } from "falkordb";
 import type pg from "pg";
-import { finishBuild, readBuild, readChunkBodies, type BuildRow } from "@/graph/build.db";
+import { readVectors } from "@/embed/embed.db";
+import { finishBuild, readBuild, readChunkBodies, readChunkInputHashes, type BuildRow } from "@/graph/build.db";
 import type { CheckResult } from "@/smoke/check-result";
 
 export type CheckReport = { buildId: string; ok: boolean; checks: CheckResult[]; conflicts: unknown };
@@ -124,6 +125,25 @@ export async function checkGraph(pool: pg.Pool, db: FalkorDB, buildId: string): 
     return { ok: hits.includes(chunk.id), detail: `"${word}" -> ${hits.length} hit(s)` };
   });
 
+  const vectors = build.config.vectors;
+  if (vectors && typeof vectors === "object") {
+    const settings = vectors as { model: string; dimensions: number };
+    await run("every chunk has an embedding", () => none(graph, "MATCH (k:Chunk) WHERE k.embedding IS NULL RETURN k.id AS v"));
+    await run("vector index returns a chunk as its own nearest neighbour", async () => {
+      const [chunkId] = await values<string>(graph, "MATCH (k:Chunk) RETURN k.id AS v ORDER BY k.id LIMIT 1");
+      if (!chunkId) return { ok: false, detail: "no chunks" };
+      const hash = (await readChunkInputHashes(pool, [chunkId])).get(chunkId) ?? "";
+      const vector = (await readVectors(pool, settings, [hash])).get(hash);
+      if (!vector) return { ok: false, detail: `no cached vector for ${chunkId}` };
+      const reply = await graph.roQuery<{ id: string; score: number }>(
+        "CALL db.idx.vector.queryNodes('Chunk', 'embedding', 1, vecf32($v)) YIELD node, score RETURN node.id AS id, score",
+        { params: { v: vector } },
+      );
+      const top = reply.data?.[0];
+      return { ok: top?.id === chunkId, detail: `nearest ${top?.id ?? "none"} (distance ${Number(top?.score ?? NaN).toFixed(4)})` };
+    });
+  }
+
   const ok = checks.every((check) => check.ok);
   const conflicts = (build.integrity as { conflicts?: unknown } | null)?.conflicts ?? [];
   await finishBuild(pool, buildId, ok ? "checked" : "failed", {
@@ -133,7 +153,7 @@ export async function checkGraph(pool: pg.Pool, db: FalkorDB, buildId: string): 
   return { buildId, ok, checks, conflicts };
 }
 
-async function values<T>(graph: Graph, query: string, params?: Record<string, string | number>): Promise<T[]> {
+async function values<T>(graph: Graph, query: string, params?: Record<string, string | number | number[]>): Promise<T[]> {
   const reply = await graph.roQuery<{ v: T }>(query, params ? { params } : undefined);
   return (reply.data ?? []).map((row) => row.v);
 }

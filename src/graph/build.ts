@@ -1,15 +1,25 @@
 import { randomBytes } from "node:crypto";
 import type { FalkorDB } from "falkordb";
 import type pg from "pg";
+import { embeddingSettings } from "@/config/server-env";
+import { readVectors } from "@/embed/embed.db";
 import { readSnapshot, finishBuild, insertBuild, type Snapshot } from "@/graph/build.db";
 import { graphName } from "@/graph/client";
 import { deriveOwnershipIntervals, type OwnershipConflict } from "@/graph/ownership-intervals";
-import { createIndexes, projectSnapshot } from "@/graph/project";
+import { createIndexes, projectSnapshot, projectVectors } from "@/graph/project";
 import { CHUNKER_VERSIONS } from "@/ingest/chunk";
 import type { TopicRegistry } from "@/ingest/registry";
-import type { OwnershipClaim } from "@/contracts/claims";
+import type { Claim, OwnershipClaim } from "@/contracts/claims";
 
 export const GRAPH_SCHEMA_VERSION = 1;
+
+// Which reviewed claims a build projects. Fixture seeding and real extraction stay separate paths;
+// structured roster claims belong to both.
+export const CLAIM_SETS = {
+  fixture: ["structured", "fixture_reviewed"],
+  extracted: ["structured", "extracted"],
+} as const satisfies Record<string, Claim["origin"][]>;
+export type ClaimSet = keyof typeof CLAIM_SETS;
 
 export type BuildOutcome = { buildId: string; graphName: string; conflicts: OwnershipConflict[] };
 
@@ -25,15 +35,28 @@ export function buildGraphName(buildId: string): string {
 
 // Projects approved Postgres records into a brand-new graph. Makes no model or embedding calls.
 // Leaves the build "built" on success and "failed" (with its graph kept for inspection) otherwise.
-export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicRegistry): Promise<BuildOutcome> {
+export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicRegistry, claimSet: ClaimSet = "fixture"): Promise<BuildOutcome> {
   const client = await pool.connect();
   let snapshot: Snapshot;
   try {
-    snapshot = await readSnapshot(client, Object.values(CHUNKER_VERSIONS));
+    snapshot = await readSnapshot(client, Object.values(CHUNKER_VERSIONS), [...CLAIM_SETS[claimSet]]);
   } finally {
     client.release();
   }
   assertSnapshotConsistent(snapshot);
+
+  // Vectors come only from the cache. If embeddings are configured, every selected chunk must
+  // have one; otherwise the build refuses before creating anything.
+  const settings = embeddingSettings();
+  let vectors: Map<string, number[]> | undefined;
+  if (settings) {
+    const cached = await readVectors(pool, settings, snapshot.chunks.map((chunk) => chunk.embeddingInputHash));
+    const missing = snapshot.chunks.filter((chunk) => !cached.has(chunk.embeddingInputHash));
+    if (missing.length) {
+      throw new Error(`${missing.length} selected chunk(s) have no cached ${settings.model}/${settings.dimensions} embedding; run pnpm embed first`);
+    }
+    vectors = new Map(snapshot.chunks.map((chunk) => [chunk.chunkId, cached.get(chunk.embeddingInputHash) ?? []]));
+  }
 
   const isExclusive = (projectId: string, role: string) => topics.projects[projectId]?.ownership_roles[role]?.exclusive ?? false;
   const ownership = snapshot.claims.filter((claim): claim is OwnershipClaim => claim.kind === "ownership");
@@ -53,8 +76,8 @@ export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicReg
       company_id: snapshot.companyId,
       chunker_versions: CHUNKER_VERSIONS,
       topics_revision: topics.revision,
-      // Vector index and chunk embeddings arrive with the embedding cache (LOC-3).
-      vectors: "absent",
+      claim_set: claimSet,
+      vectors: settings ? { model: settings.model, dimensions: settings.dimensions, similarity: "cosine" } : "absent",
     },
     selection: {
       versionIds: snapshot.versions.map((version) => version.versionId),
@@ -70,6 +93,7 @@ export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicReg
         Supersession: count("supersession"),
         EVIDENCED_BY: evidenceEdges,
         SUPERSEDES: count("supersession"),
+        vectors: vectors ? snapshot.chunks.length : 0,
       },
     },
   });
@@ -78,6 +102,7 @@ export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicReg
     const graph = db.selectGraph(name);
     await createIndexes(graph);
     await projectSnapshot(graph, snapshot, new Map(intervals.map((interval) => [interval.claimId, interval])), isExclusive);
+    if (vectors && settings) await projectVectors(graph, vectors, settings.dimensions);
     await finishBuild(pool, buildId, "built", { integrity: { conflicts } });
   } catch (error) {
     await finishBuild(pool, buildId, "failed", { error: (error as Error).message });
@@ -97,6 +122,17 @@ function assertSnapshotConsistent(snapshot: Snapshot): void {
       if (!chunkIds.has(item.chunk_id)) problems.push(`${claim.claim_id} cites ${item.chunk_id}, which is not in a selected version`);
     }
     if (!entityIds.has(claim.project_id)) problems.push(`${claim.claim_id} references unknown project ${claim.project_id}`);
+  }
+  // Supersessions and handoffs must point at claims inside the same projected set.
+  const claimIds = new Set(snapshot.claims.map((claim) => claim.claim_id));
+  for (const claim of snapshot.claims) {
+    const refs =
+      claim.kind === "supersession"
+        ? [claim.payload.new_decision_id, claim.payload.old_decision_id]
+        : claim.kind === "ownership" && claim.payload.handoff_from
+          ? [claim.payload.handoff_from]
+          : [];
+    for (const ref of refs) if (!claimIds.has(ref)) problems.push(`${claim.claim_id} references ${ref}, which is not in this claim set`);
   }
   if (problems.length) throw new Error(`Snapshot is inconsistent; re-run pnpm seed:claims:\n  ${problems.join("\n  ")}`);
 }

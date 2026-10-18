@@ -9,7 +9,7 @@ Architecture: [architecture.md](architecture.md).
 |---|---|---|
 | LOC-1 | Bootstrap: scaffold, local Postgres + FalkorDB, connectivity smoke checks | Done (#1, merged); provider access not verified (#2) |
 | LOC-2 | Dataset and graph vertical slice | Done on review branch: #4, #5, #6 |
-| LOC-3 | Real ingestion and extraction | Not started |
+| LOC-3 | Real ingestion and extraction | Provider-independent parts done (#8, #9); real runs blocked on #2 |
 | LOC-4 | Natural-language questions and answers | Not started |
 | LOC-5 | UI, verification, submission | Not started |
 
@@ -33,7 +33,13 @@ adds LLM extraction, review reports, and embeddings. Search (`search_context`) w
 - `rebuild-graph`, `check-graph`, `activate-graph`: fresh graph per build, integrity checks, pointer flip.
 - Fixed graph tools answering the three main questions without an LLM.
 
-## LOC-3 Real ingestion and extraction
+## LOC-3 Real ingestion and extraction (current)
+
+The owner chose to build the provider-independent parts while #2 blocks model access: extraction
+runs, linking, and review (#8); embedding cache and vector projection (#9). Still to do once
+#2 works: run the model over the corpus, review its proposals in the approvals file, publish an
+`--claims extracted` build, run `pnpm eval` against it, and `pnpm embed` the chunks. Hybrid
+`search_context` (query embeddings at question time) belongs with LOC-4.
 
 - Parsers and chunkers (heading-aware documents, turn-aware meetings, CSV evidence rows), version hashes.
 - `extract` with persisted raw output and full cache keys; `review:claims` report plus approvals file.

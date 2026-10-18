@@ -26,7 +26,8 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | `src/time/` | Company-local times: day/minute precision, timezone, UTC instants |
 | `src/contracts/` | Shared Zod contracts (claims, evidence) |
 | `src/ingest/` | Manifest, CSV, chunkers, versioning, registry and aliases, fixture loading |
-| `src/extract/` | Claim drafts, evidence resolution, validation, claim seeding |
+| `src/extract/` | Claim drafts, evidence resolution, validation, seeding; extraction windows, prompt, cache keys, runs, interpretation, linking, approvals, review report |
+| `src/embed/` | Embedding cache: embed missing chunk inputs, validate vectors |
 | `src/graph/` | Build snapshot, projection, integrity checks, activation, ownership intervals |
 | `src/graph/queries.ts` | Fixed, parameterised Cypher read templates |
 | `src/retrieve/` | Request pinning, graph tools, evidence hydration, alias resolution |
@@ -34,5 +35,5 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | `src/eval/` | Expected-answer comparison and eval runner (reports in `eval/reports/`, gitignored) |
 | `src/test-support/` | Isolated `*_test` database for integration tests |
 | `fixtures/lumen-freight/` | Synthetic company sources, reviewed claims, independent expected answers |
-| `src/provider/openai-transport.ts` | Server-side model-provider transport |
-| `scripts/` | Bootstrap/check shell scripts and `tsx` entry points (`data.ts`: registry, ingest, claims; `graph.ts`: rebuild, check, activate, publish; `eval.ts`; `demo.ts`) |
+| `src/provider/` | Server-side model-provider transport and the (unverified) extraction and embedding adapters |
+| `scripts/` | Bootstrap/check shell scripts and `tsx` entry points (`data.ts`: registry, ingest, claims; `graph.ts`: rebuild, check, activate, publish; `eval.ts`; `demo.ts`; `extract.ts`: run, report, apply; `embed.ts`) |

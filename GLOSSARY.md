@@ -31,6 +31,16 @@ A claim derived deterministically from a structured record, such as a row of the
 **Reviewed fixture claim**:
 A hand-reviewed claim in the fixture set that cites its evidence as a document and an exact quote; the stand-in for reviewed extraction output until extraction exists.
 
+**Extraction run**:
+One model call for one document window under one cache key, with its raw output stored before interpretation.
+_Avoid_: Job, request
+
+**Window**:
+A bounded, contiguous span of a document version's chunks sent to the model together.
+
+**Claim set**:
+Which reviewed claims a graph build projects: `fixture` (structured plus fixture-reviewed) or `extracted` (structured plus extracted).
+
 **Review status**:
 Whether a claim is `pending`, `approved`, or `rejected` for use in the graph. Independent of a decision's lifecycle.
 

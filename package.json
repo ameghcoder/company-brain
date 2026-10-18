@@ -31,7 +31,11 @@
     "graph:publish": "tsx scripts/graph.ts publish",
     "graph:status": "tsx scripts/graph.ts status",
     "eval": "tsx scripts/eval.ts",
-    "demo": "tsx scripts/demo.ts"
+    "demo": "tsx scripts/demo.ts",
+    "extract": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 tsx scripts/extract.ts run",
+    "review:report": "tsx scripts/extract.ts report",
+    "review:apply": "tsx scripts/extract.ts apply",
+    "embed": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 tsx scripts/embed.ts"
   },
   "dependencies": {
     "falkordb": "6.8.0",

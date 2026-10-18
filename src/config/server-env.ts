@@ -99,3 +99,29 @@ export function providerConfig(): ProviderConfig {
     embeddingDimensions: env.OPENAI_EMBEDDING_DIMENSIONS,
   };
 }
+
+const extractionModelSchema = z.object({ OPENAI_TEXT_MODEL: z.preprocess(emptyAsUndefined, z.string().min(1)) });
+
+// The model ID alone (no credentials) identifies extraction runs, so stored runs can be
+// re-interpreted offline without provider access.
+export function extractionModelId(): string {
+  return parseEnv(extractionModelSchema, process.env).OPENAI_TEXT_MODEL;
+}
+
+const embeddingSettingsSchema = z.object({
+  OPENAI_EMBEDDING_MODEL: z.preprocess(emptyAsUndefined, z.string().min(1).optional()),
+  OPENAI_EMBEDDING_DIMENSIONS: z.preprocess(emptyAsUndefined, z.coerce.number().int().min(1).max(4096).optional()),
+});
+
+export type EmbeddingSettings = { model: string; dimensions: number };
+
+// Which cached vectors builds use. Needs no credentials: builds only read the cache. Returns
+// undefined when embeddings are not configured (builds then project no vectors).
+export function embeddingSettings(): EmbeddingSettings | undefined {
+  const env = parseEnv(embeddingSettingsSchema, process.env);
+  if (env.OPENAI_EMBEDDING_MODEL === undefined && env.OPENAI_EMBEDDING_DIMENSIONS === undefined) return undefined;
+  if (env.OPENAI_EMBEDDING_MODEL === undefined || env.OPENAI_EMBEDDING_DIMENSIONS === undefined) {
+    throw new ConfigError("Invalid server configuration:\n  OPENAI_EMBEDDING_MODEL and OPENAI_EMBEDDING_DIMENSIONS must be set together");
+  }
+  return { model: env.OPENAI_EMBEDDING_MODEL, dimensions: env.OPENAI_EMBEDDING_DIMENSIONS };
+}
