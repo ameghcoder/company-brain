@@ -55,13 +55,15 @@ of issue #18).
 |---|---|
 | `pnpm test` | 126/126 pass |
 | `pnpm check` | All checks passed: services, tests, typecheck, lint, production build, bundle secret scan, HTTP check |
-| `pnpm eval` | 24/24 on build `b20261018t045115_9a46` (fixture claims, with vectors) |
-| `OPENAI_AUTH_MODE=api_key pnpm eval:questions` | 24/24 with `gpt-5-mini`, planner prompt v3 |
+| `pnpm eval` | 24/24 on build `b20261018t061144_fffe` (fixture claims, with vectors), published from a fresh clone |
+| `OPENAI_AUTH_MODE=api_key pnpm eval:questions` | 24/24 with `gpt-5-mini`, planner prompt v3, on the same build |
+| Fresh clone of the branch, README steps only | `pnpm bootstrap`, `data:load`, `graph:publish`, `demo`, `eval` (24/24), `check` (126/126 tests) all pass. It shares the running Docker services and database, so it shows the steps work, not a first run on an empty database |
+| Paid README steps | `check:provider` passes; `embed` finds nothing missing (cached); `ask` answers with citations |
 | Browser run (#16) | The demo questions in Chromium against `pnpm start` with the real provider; screenshots in `docs/screenshots/` |
 
 Planner output varies between runs. While the v3 planner rules were being written (#14), single runs
 failed one question each in three different ways, which is what the rules address. Every run
-recorded with the committed prompt has passed 24/24 (four runs on 2026-10-18 before this report).
+recorded with the committed prompt has passed 24/24 (five runs on 2026-10-18).
 
 ## Not verified
 
