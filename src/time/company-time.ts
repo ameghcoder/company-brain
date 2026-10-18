@@ -50,6 +50,13 @@ export function localDateString(date: Date, timezone: string): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+// The local wall-clock minute of an instant, e.g. for telling a model what "now" is.
+export function toLocalTimePoint(date: Date, timezone: string): TimePoint {
+  const { year, month, day, hour, minute } = utcToZonedLocal(date, timezone);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return { value: `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}`, precision: "minute", timezone, utc: date.toISOString() };
+}
+
 type LocalFields = { year: number; month: number; day: number; hour: number; minute: number };
 
 function assertValidLocal(local: LocalFields, value: string): void {

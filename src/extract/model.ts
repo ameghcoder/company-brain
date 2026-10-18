@@ -1,10 +1,6 @@
-// The boundary between the extraction pipeline and a model provider. The pipeline stores whatever
-// comes back verbatim before interpreting it.
-export type ExtractionRequest = { system: string; user: string; schemaName: string; schema: Record<string, unknown> };
-export type ExtractionReply = { content: string; servedModel: string };
+import type { StructuredModel, StructuredReply, StructuredRequest } from "@/provider/structured-model";
 
-export type ExtractionModel = {
-  // Configured model ID; part of the cache key.
-  id: string;
-  complete(request: ExtractionRequest): Promise<ExtractionReply>;
-};
+// The pipeline stores whatever the model returns verbatim before interpreting it.
+export type ExtractionModel = StructuredModel;
+export type ExtractionRequest = StructuredRequest;
+export type ExtractionReply = StructuredReply;

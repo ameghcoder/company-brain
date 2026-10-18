@@ -84,6 +84,12 @@ An alternative name for a person, team, or project, scoped by company and entity
 The chunk or chunks supporting a specific field of a claim, with a role such as decision, rationale, assignment, or replacement.
 _Avoid_: Source (when meaning a chunk), citation (when meaning the stored link)
 
+**Plan**:
+The planning model's proposal for one question: intents, mentions, topic keys, and time words. Never trusted until the server resolves it.
+
+**Clarification**:
+A specific question back to the user when a name, topic, or project fits several recorded entities; never a guess.
+
 **Evidence packet**:
 The bounded set of graph facts, paths, conflicts, and hydrated excerpts given to the answer model for one question.
 

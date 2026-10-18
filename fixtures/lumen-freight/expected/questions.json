@@ -1,0 +1,34 @@
+{
+  "about": "Natural-language versions of the independent expected-answer cases, written by hand. Each entry asks the case's question in plain language; the eval plans it with the real model and compares the result with that case's expectations in answers.json. `context` simulates a follow-up to an earlier question. `accept_outcomes` lists the outcomes that are acceptable when plain-language wording is legitimately open (the fixed tools have no person-centric query).",
+  "questions": [
+    { "case_id": "q1-atlas-provider-changes-this-month", "question": "What changed in the Atlas project's payments provider this month?" },
+    {
+      "case_id": "q2-why-provider-replaced",
+      "question": "Why did the team replace the earlier provider decision, and where was that decided?",
+      "context": { "project": "proj-atlas", "topic": "payments.provider" }
+    },
+    { "case_id": "q3a-migration-owner-today", "question": "Who owns the Atlas migration today?" },
+    { "case_id": "q3b-migration-owner-before-oct-15", "question": "Who owned the Atlas migration before October 15?" },
+    { "case_id": "q3c-migration-owner-at-handoff-boundary", "question": "Who owned the Atlas migration at the start of October 15?" },
+    { "case_id": "q4-atlas-timeline", "question": "Show the Atlas decision and ownership timeline with evidence." },
+    { "case_id": "q5-absent-subject", "question": "What was decided about the CRM vendor?" },
+    { "case_id": "atlas-provider-before-switch", "question": "What was the Atlas payments provider on October 5?" },
+    { "case_id": "atlas-proposal-is-not-a-decision", "question": "What was the Atlas payments provider on September 10?" },
+    { "case_id": "atlas-fraud-is-a-separate-topic", "question": "What does Atlas use for fraud screening?" },
+    { "case_id": "beacon-analytics-future-switch", "question": "What does Beacon use for product analytics today?" },
+    { "case_id": "beacon-analytics-after-switch", "question": "What does Beacon use for product analytics on November 2?" },
+    { "case_id": "beacon-release-owner-before-future-handoff", "question": "Who manages Beacon releases today?" },
+    { "case_id": "beacon-release-owner-after-handoff", "question": "Who manages Beacon releases on November 1?" },
+    { "case_id": "beacon-release-owner-before-records", "question": "Who managed Beacon releases on May 1?" },
+    { "case_id": "cobalt-pipeline-owner-conflict", "question": "Who owns the Cobalt ingestion pipeline?" },
+    { "case_id": "cobalt-pipeline-owner-before-conflict", "question": "Who owned the Cobalt ingestion pipeline on September 21?" },
+    { "case_id": "cobalt-warehouse-team-owner", "question": "Who owns the Cobalt warehouse platform?" },
+    { "case_id": "cobalt-warehouse-no-rationale", "question": "Why did Cobalt choose its warehouse platform?" },
+    { "case_id": "alias-alex-is-ambiguous", "question": "What did Alex decide?" },
+    {
+      "case_id": "alias-marcus-resolves",
+      "question": "What does Marcus own?",
+      "accept_outcomes": ["needs_clarification", "insufficient_evidence"]
+    }
+  ]
+}
