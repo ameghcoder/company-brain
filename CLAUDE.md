@@ -5,14 +5,15 @@ decision was made, who is responsible now or at a given time, and how the histor
 substantive answer carries source evidence and the graph paths that supplied its facts. One synthetic
 company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.md).
 
-## Current milestone and scope
+## Status and scope
 
-- **Now: Milestone 5 (LOC-5) UI, verification, submission**, as issues opened in turn: one-screen
-  UI (#16); public-demo limits and graph retention (#17); README, disclosure, and verification (#18,
-  `docs/verification.md`; keep its results table current when checks change).
-  Provider access works (#2) in `api_key` mode. Do **not** deploy without the owner's approval.
-- LOC-1 to LOC-4 are done and merged (LOC-3 without real extraction runs, not yet requested).
-  Plan: [docs/project-plan.md](docs/project-plan.md).
+- **All milestones (LOC-1 to LOC-5) are done and merged** (last: PR #19). No milestone is
+  authorized now: start new work only when the owner asks, and record new ideas in the plan first.
+- Outstanding, all the owner's call: the demo recording; deployment (needs explicit approval, plus
+  hosting, `TRUST_PROXY`, and a fixed demo "as of" date decision); the two "owner to confirm" points
+  in `docs/ai-disclosure.md`; real extraction runs (LOC-3 remainder, paid); the ideas parked in
+  [docs/project-plan.md](docs/project-plan.md) (person-centric tool, topic synonyms, latency).
+- Keep `docs/verification.md`'s results table current whenever checks change.
 - Small tasks inside an authorized milestone don't need separate approval. Stop at the milestone boundary
   and report.
 - New ideas go into `docs/project-plan.md` as `LOC-n` items, not into GitHub issues or code.
@@ -103,8 +104,9 @@ pnpm review:apply     # same, applying fixtures/lumen-freight/review/extracted-a
 pnpm graph:publish --claims extracted   # build from structured + approved extracted claims
 pnpm ask "<question>" # PAID: plan + checked answer with citations (needs OPENAI_AUTH_MODE=api_key); --steps shows tool results
 pnpm eval:questions   # PAID: hand-written questions through the real planner vs expected answers
-pnpm extract          # PAID model calls for windows without a parsed run (real runs not yet reviewed)
-pnpm embed            # PAID embeddings for chunks missing from the cache (corpus not yet embedded)
+pnpm extract          # PAID model calls for windows without a parsed run (no real run reviewed yet)
+pnpm embed            # PAID embeddings for chunks missing from the cache (corpus embedded; reruns embed 0)
+pnpm build && OPENAI_AUTH_MODE=api_key pnpm start   # the UI at http://127.0.0.1:3000 (PAID per question)
 pnpm typecheck && pnpm lint && pnpm build
 CHECK_PROVIDER=1 pnpm check   # adds paid minimal provider check (needs valid provider config)
 # Provider calls here need OPENAI_AUTH_MODE=api_key (no network secret is attached in this environment).
