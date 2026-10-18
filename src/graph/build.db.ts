@@ -200,12 +200,20 @@ export async function readActiveBuild(db: pg.Pool | pg.PoolClient): Promise<Acti
 export async function setActiveBuild(client: pg.PoolClient, buildId: string): Promise<{ previous: string | null }> {
   await client.query("BEGIN");
   try {
-    const build = await client.query<{ state: BuildState }>("SELECT state FROM graph_builds WHERE build_id = $1 FOR UPDATE", [buildId]);
+    const build = await client.query<{ state: BuildState; pruned: boolean }>(
+      "SELECT state, pruned_at IS NOT NULL AS pruned FROM graph_builds WHERE build_id = $1 FOR UPDATE",
+      [buildId],
+    );
     const state = build.rows[0]?.state;
     if (state !== "checked") throw new Error(`Build ${buildId} is ${state ?? "unknown"}; only a checked build can be activated`);
+    if (build.rows[0]?.pruned) throw new Error(`Build ${buildId} was pruned; its graph no longer exists`);
     const current = await client.query<{ active_build_id: string | null }>("SELECT active_build_id FROM app_state FOR UPDATE");
     if (current.rowCount !== 1) throw new Error("Expected exactly one company in app_state");
+    const previous = current.rows[0]?.active_build_id ?? null;
     await client.query("UPDATE app_state SET active_build_id = $1, updated_at = now()", [buildId]);
+    // Retirement time starts the grace period before the old graph may be pruned.
+    if (previous && previous !== buildId) await client.query("UPDATE graph_builds SET retired_at = now() WHERE build_id = $1", [previous]);
+    await client.query("UPDATE graph_builds SET retired_at = NULL WHERE build_id = $1", [buildId]);
     await client.query("COMMIT");
     return { previous: current.rows[0]?.active_build_id ?? null };
   } catch (error) {
@@ -225,4 +233,26 @@ export async function readChunkInputHashes(db: pg.Pool, chunkIds: string[]): Pro
     [chunkIds],
   );
   return new Map(result.rows.map((row) => [row.chunk_id, row.embedding_input_hash]));
+}
+
+export type PruneCandidate = { buildId: string; graphName: string; state: BuildState; since: Date };
+
+// Builds whose graphs may be pruned: not active, not pruned, not still building. `since` is when
+// the build stopped being usable: retirement, or the end of a build that was never activated.
+export async function readPruneCandidates(client: pg.PoolClient): Promise<{ active: string | null; candidates: PruneCandidate[] }> {
+  const active = await client.query<{ active_build_id: string | null }>("SELECT active_build_id FROM app_state FOR UPDATE");
+  const activeId = active.rows[0]?.active_build_id ?? null;
+  const rows = await client.query<{ build_id: string; graph_name: string; state: BuildState; since: Date }>(
+    `SELECT build_id, graph_name, state, COALESCE(retired_at, finished_at, created_at) AS since
+     FROM graph_builds
+     WHERE pruned_at IS NULL AND state <> 'building' AND build_id IS DISTINCT FROM $1
+     ORDER BY since DESC, build_id DESC
+     FOR UPDATE`,
+    [activeId],
+  );
+  return { active: activeId, candidates: rows.rows.map((row) => ({ buildId: row.build_id, graphName: row.graph_name, state: row.state, since: row.since })) };
+}
+
+export async function markPruned(client: pg.PoolClient, buildIds: string[]): Promise<void> {
+  if (buildIds.length) await client.query("UPDATE graph_builds SET pruned_at = now() WHERE build_id = ANY($1)", [buildIds]);
 }

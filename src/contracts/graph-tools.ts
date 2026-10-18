@@ -81,7 +81,8 @@ export type SourceExcerpt = {
   title: string;
   event_date: string;
   heading_path: string[];
-  excerpts: { claim_id: string; role: EvidenceItem["role"]; text: string }[];
+  // start/end: the span in the chunk body, so several spans of one claim and role stay distinct.
+  excerpts: { claim_id: string; role: EvidenceItem["role"]; start: number; end: number; text: string }[];
 };
 
 // A graph edge that supplied a fact, between stable application IDs.

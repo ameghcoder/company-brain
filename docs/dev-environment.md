@@ -46,14 +46,24 @@ similarityFunction: 'cosine'}` with `db.idx.vector.queryNodes`. With cosine, the
 | `pnpm eval:questions` | **Paid (a planning and an answer call per question, plus a query embedding when a search runs).** Asks `fixtures/lumen-freight/expected/questions.json` through the real planner and compares with `answers.json`; writes `eval/reports/questions-*.json`. |
 | `pnpm db:migrate` | Applies pending `src/db/migrations/*.sql` (advisory-locked, one transaction each). |
 | `pnpm check:provider` | **Paid, opt-in.** One tiny completion and one embedding. Also runs inside `pnpm check` when `CHECK_PROVIDER=1`. |
+| `pnpm graph:prune [--keep N] [--grace-minutes M] [--dry-run]` | Deletes FalkorDB graphs of builds that are not active, not the kept rollback build(s) (default 1), and retired or unused for longer than the grace period (default 10 min). Rows stay with `pruned_at`. |
 | `pnpm dev` / `pnpm build` / `pnpm start` | Next.js on 127.0.0.1. Build and start force `NODE_ENV=production` because the cloud VM exports `NODE_ENV=development`. |
 | `pnpm typecheck` / `pnpm lint` | `tsc --noEmit` / ESLint flat config from `eslint-config-next`. |
 
 `POST /api/question` with `{ "question": "...", "as_of"?: "<ISO>", "context"?: {project, topic} }`
-returns the public answer shape (outcome, answer items with citation IDs, citations, timeline, paths,
-incompleteness flags). The server process needs the provider configuration (`OPENAI_AUTH_MODE=api_key`
-here). Questions over 500 characters are rejected; rate limiting arrives with the public demo (LOC-5).
+returns the public answer shape (outcome, answer items with citation IDs and supporting edge indices,
+citations, timeline, paths, labelled graph nodes, follow-up context, incompleteness flags). The server
+process needs the provider configuration (`OPENAI_AUTH_MODE=api_key` here). Questions over 500 characters are rejected. Public-demo limits (#17, `src/server/`) refuse a
+request with `413` (body over `QUESTION_MAX_BODY_BYTES`) or `429` plus `Retry-After` (per-client rate,
+concurrency cap, daily budget) before any model call; see `.env.example` for the settings. Limits are
+in memory, so they apply per server process and reset on restart. Clients are told apart by
+`X-Forwarded-For` only with `TRUST_PROXY=1`.
 Answers take roughly 6-12 s, around 20 s when a repair is needed.
+
+The UI is the home page: `pnpm build && OPENAI_AUTH_MODE=api_key pnpm start`, then open
+`http://127.0.0.1:3000`. It calls `/api/question`; the "As of" date is sent as local noon in the
+company timezone. shadcn/ui components live in `src/components/ui/` (copied from a pinned commit; see
+`SOURCE.md` there, because the shadcn registry host is blocked from this environment).
 
 Bootstrap never runs ingestion, extraction, embeddings, graph rebuilds, or model calls. After a fresh
 session or a new database, load the demo data deliberately: `pnpm data:load && pnpm graph:publish`.

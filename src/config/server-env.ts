@@ -125,3 +125,25 @@ export function embeddingSettings(): EmbeddingSettings | undefined {
   }
   return { model: env.OPENAI_EMBEDDING_MODEL, dimensions: env.OPENAI_EMBEDDING_DIMENSIONS };
 }
+
+const intSetting = (fallback: number, max: number) => z.preprocess(emptyAsUndefined, z.coerce.number().int().min(1).max(max).default(fallback));
+const questionLimitsSchema = z.object({
+  QUESTION_MAX_BODY_BYTES: intSetting(4096, 65_536),
+  QUESTION_RATE_LIMIT: intSetting(10, 10_000),
+  QUESTION_RATE_WINDOW_SECONDS: intSetting(600, 86_400),
+  QUESTION_MAX_CONCURRENT: intSetting(3, 100),
+  QUESTION_DAILY_BUDGET: intSetting(500, 1_000_000),
+  TRUST_PROXY: z.preprocess(emptyAsUndefined, z.enum(["0", "1"]).default("0")),
+});
+
+// Public-demo limits on the paid question API; the defaults suit one small demo instance.
+export function questionLimitsConfig() {
+  const env = parseEnv(questionLimitsSchema, process.env);
+  return {
+    maxBodyBytes: env.QUESTION_MAX_BODY_BYTES,
+    perClient: { limit: env.QUESTION_RATE_LIMIT, windowMs: env.QUESTION_RATE_WINDOW_SECONDS * 1000 },
+    maxConcurrent: env.QUESTION_MAX_CONCURRENT,
+    dailyBudget: env.QUESTION_DAILY_BUDGET,
+    trustProxy: env.TRUST_PROXY === "1",
+  };
+}

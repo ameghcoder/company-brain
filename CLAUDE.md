@@ -7,11 +7,11 @@ company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.
 
 ## Current milestone and scope
 
-- **Now: Milestone 4 (LOC-4) natural-language questions and answers**, as issues opened in turn:
-  planning, resolution, and logs (#12); answer generation with checks, repair, and the question
-  API (#13); `search_context` (#14). Provider access works (#2) in `api_key` mode.
-- LOC-1 to LOC-3 (provider-independent part) are done and merged. Real extraction runs (LOC-3
-  remainder) were not requested yet. Do **not** start the final UI (LOC-5) until the owner asks.
+- **Now: Milestone 5 (LOC-5) UI, verification, submission**, as issues opened in turn: one-screen
+  UI (#16); public-demo limits and graph retention (#17); README, disclosure, and verification (#18,
+  `docs/verification.md`; keep its results table current when checks change).
+  Provider access works (#2) in `api_key` mode. Do **not** deploy without the owner's approval.
+- LOC-1 to LOC-4 are done and merged (LOC-3 without real extraction runs, not yet requested).
   Plan: [docs/project-plan.md](docs/project-plan.md).
 - Small tasks inside an authorized milestone don't need separate approval. Stop at the milestone boundary
   and report.
@@ -72,7 +72,8 @@ Single context: root `GLOSSARY.md` plus `docs/adr/`. See `docs/agents/domain.md`
   in FalkorDB. Postgres may only resolve aliases and hydrate exact chunk IDs. There is no Postgres
   answer fallback; a graph outage returns `unavailable` ([ADR 0001](docs/adr/0001-postgres-record-falkordb-projection.md)).
 - Each build goes into a **fresh graph**, which is activated only after checks pass. Never rebuild
-  in place with `MERGE`. `rebuild-graph` makes no model calls.
+  in place with `MERGE`. `rebuild-graph` makes no model calls. Only `graph:prune` deletes build
+  graphs, and only by name from build rows.
 - **Fixed, parameterised graph tools only.** No LLM-generated Cypher, and graph names come only from
   `graphName()` ([ADR 0002](docs/adr/0002-fixed-parameterised-graph-tools.md)).
 - **Provenance is immutable.** Document versions and chunks are never edited, and approved claim IDs
@@ -94,6 +95,7 @@ pnpm check:services   # Postgres + FalkorDB real-service smoke checks only
 pnpm test             # unit tests + integration tests against a separate *_test database
 pnpm data:load        # registry + ingest + reviewed claims into the dev database (idempotent)
 pnpm graph:publish    # fresh graph build -> integrity checks -> activate only if all pass
+pnpm graph:prune      # delete old build graphs (keeps active + 1 rollback; 10 min grace); --dry-run
 pnpm eval             # all independent expected-answer cases against the active build (JSON report)
 pnpm demo             # the demo questions as structured requests, rendered with evidence
 pnpm review:report    # re-interpret stored extraction runs offline -> review/reports/*.md (no writes)

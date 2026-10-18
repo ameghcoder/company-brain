@@ -10,8 +10,8 @@ Architecture: [architecture.md](architecture.md).
 | LOC-1 | Bootstrap: scaffold, local Postgres + FalkorDB, connectivity smoke checks | Done (#1, merged); provider access not verified (#2) |
 | LOC-2 | Dataset and graph vertical slice | Done on review branch: #4, #5, #6 |
 | LOC-3 | Real ingestion and extraction | Pipeline done (#8, #9); corpus embedded; real extraction runs not yet requested |
-| LOC-4 | Natural-language questions and answers | In progress: planning #12, answers #13 |
-| LOC-5 | UI, verification, submission | Not started |
+| LOC-4 | Natural-language questions and answers | Done and merged: #12, #13, #14 (PR #15) |
+| LOC-5 | UI, verification, submission | Built: UI #16, limits and retention #17, README/disclosure/verification #18; recording and deployment are the owner's |
 
 ## LOC-1 Bootstrap (done)
 
@@ -45,7 +45,7 @@ runs, linking, and review (#8); embedding cache and vector projection (#9). Stil
 - `extract` with persisted raw output and full cache keys; `review:claims` report plus approvals file.
 - `embed` into the embedding cache. Compare extracted facts against the independent expectations.
 
-## LOC-4 Natural-language questions and answers (current)
+## LOC-4 Natural-language questions and answers (done)
 
 Delivered as issues opened in turn: (1) planning, resolution, and `qa_logs` (#12); (2) evidence
 packet, answer generation, checks, one repair, fallback, question API (#13); (3) `search_context`
@@ -64,7 +64,13 @@ or insufficient evidence. Idea for later: a fixed `get_assignments_for_person` t
 - Evidence packet, structured answer items, server-side output checks, one capped repair attempt,
   deterministic fallback, outcome codes, `qa_logs`.
 
-## LOC-5 UI, verification, submission
+## LOC-5 UI, verification, submission (current)
+
+Planned as issues opened in turn: (1) one-screen UI (#16); (2) public-demo limits (request rate and
+concurrency caps on the paid question API) and graph retention (#17); (3) README, AI-assistant disclosure,
+final verification report (#18). The recording is the owner's; deployment needs its own approval.
+The demo's "today" moves with the real date, so answers about "now" change after 2026-11-01 (Beacon's
+scheduled switch). Idea: a configured default "as of" date for the public demo.
 
 - One screen: question input, answer, vertical timeline, evidence/graph panel (one renderer).
 - Request limits, read-only public demo, `eval` report, README, AI-assistant disclosure, recording.
