@@ -92,8 +92,15 @@ Compose, its hosts become the service names `postgres` and `falkordb` instead of
 `OPENAI_EMBEDDING_MODEL`, and `OPENAI_EMBEDDING_DIMENSIONS` have no defaults. The two embedding
 settings also tell graph builds which cached vectors to project (set both or neither); they and are recorded only
 after `pnpm check:provider` passes. Network secrets are not available to the environment setup script,
-so run provider checks after the session starts. Provider access is currently **not verified**
-(GitHub issue #2).
+so run provider checks after the session starts.
+
+Verified on 2026-10-18 (#2) in `api_key` mode: `gpt-5-mini` (served as `gpt-5-mini-2025-08-07`) and
+`text-embedding-3-small` at 1536 dimensions. `gpt-5-mini` is a reasoning model: hidden reasoning
+uses completion tokens, so tiny `max_completion_tokens` caps return empty text; set
+`reasoning_effort` and leave headroom. In this cloud environment no network secret is attached for
+`api.openai.com`, so commands that call the provider need `OPENAI_AUTH_MODE=api_key` (set it in the
+environment settings, or prefix the command). In that mode the key is a plain variable readable by
+anything in the VM; a network secret avoids that.
 
 ## Database lifecycle
 

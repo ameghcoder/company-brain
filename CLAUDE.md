@@ -98,10 +98,11 @@ pnpm demo             # the demo questions as structured requests, rendered with
 pnpm review:report    # re-interpret stored extraction runs offline -> review/reports/*.md (no writes)
 pnpm review:apply     # same, applying fixtures/lumen-freight/review/extracted-approvals.json
 pnpm graph:publish --claims extracted   # build from structured + approved extracted claims
-pnpm extract          # PAID model calls for windows without a parsed run; NOT VERIFIED until #2
-pnpm embed            # PAID embeddings for chunks missing from the cache; NOT VERIFIED until #2
+pnpm extract          # PAID model calls for windows without a parsed run (real runs not yet reviewed)
+pnpm embed            # PAID embeddings for chunks missing from the cache (corpus not yet embedded)
 pnpm typecheck && pnpm lint && pnpm build
 CHECK_PROVIDER=1 pnpm check   # adds paid minimal provider check (needs valid provider config)
+# Provider calls here need OPENAI_AUTH_MODE=api_key (no network secret is attached in this environment).
 ```
 
 Tests use `node:test` via `tsx` (`src/**/*.test.ts`). Pure logic gets unit tests. Anything touching
