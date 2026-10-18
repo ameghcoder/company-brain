@@ -1,0 +1,31 @@
+{
+  "revision": 1,
+  "projects": {
+    "proj-atlas": {
+      "decision_topics": {
+        "payments.provider": "Payments provider",
+        "payments.fraud_screening": "Fraud screening vendor"
+      },
+      "ownership_roles": {
+        "migration.owner": { "label": "Migration owner", "exclusive": true }
+      }
+    },
+    "proj-beacon": {
+      "decision_topics": {
+        "analytics.provider": "Product analytics provider"
+      },
+      "ownership_roles": {
+        "release.owner": { "label": "Release owner", "exclusive": true }
+      }
+    },
+    "proj-cobalt": {
+      "decision_topics": {
+        "warehouse.platform": "Warehouse platform"
+      },
+      "ownership_roles": {
+        "pipeline.owner": { "label": "Ingestion pipeline owner", "exclusive": true },
+        "warehouse.owner": { "label": "Warehouse platform owner", "exclusive": true }
+      }
+    }
+  }
+}

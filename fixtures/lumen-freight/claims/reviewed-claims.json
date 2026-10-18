@@ -1,0 +1,235 @@
+{
+  "about": "Hand-reviewed prose claims for the LOC-2 vertical slice (origin: fixture_reviewed). Ownership rows in registry/assignments.csv become structured claims own-<assignment_id> at seeding time. Evidence cites a document and an exact quote; seeding resolves each quote to the chunk of the selected version that contains it. Dates are in the company timezone; YYYY-MM-DD means day precision.",
+  "claims": [
+    {
+      "claim_id": "dec-atlas-braintree",
+      "kind": "decision",
+      "project": "proj-atlas",
+      "topic": "payments.provider",
+      "review_status": "approved",
+      "lifecycle": "decided",
+      "choice": "Braintree",
+      "title": "Use Braintree as the Atlas payments provider",
+      "decided_at": "2026-08-12",
+      "effective_at": "2026-08-12",
+      "rationale": "Existing enterprise contract with Braintree; integration fits in one sprint.",
+      "decided_by": "p-dana-ortiz",
+      "evidence": [
+        { "document": "atlas-adr-001-payments-provider", "role": "decision", "quote": "Atlas will use Braintree as its payments provider, starting immediately." },
+        { "document": "atlas-adr-001-payments-provider", "role": "rationale", "quote": "We already have an enterprise contract with Braintree, and the team can integrate it within one sprint." },
+        { "document": "atlas-adr-001-payments-provider", "role": "decided_by", "quote": "Approved by: Dana Ortiz" }
+      ]
+    },
+    {
+      "claim_id": "prop-atlas-stripe-2026-09-03",
+      "kind": "decision",
+      "project": "proj-atlas",
+      "topic": "payments.provider",
+      "review_status": "approved",
+      "lifecycle": "proposed",
+      "choice": "Stripe",
+      "title": "Possible switch of the Atlas payments provider to Stripe",
+      "proposed_at": "2026-09-03T10:02",
+      "rationale": null,
+      "decided_by": null,
+      "evidence": [
+        { "document": "atlas-sync-2026-09-03", "role": "proposal", "quote": "If that happens we might switch to Stripe." },
+        { "document": "atlas-sync-2026-09-03", "role": "proposal", "quote": "Let's not decide anything today." }
+      ]
+    },
+    {
+      "claim_id": "rej-atlas-stripe-2026-09-03",
+      "kind": "decision",
+      "project": "proj-atlas",
+      "topic": "payments.provider",
+      "review_status": "rejected",
+      "review_note": "The speaker said Atlas 'might switch'; this is a proposal, recorded as prop-atlas-stripe-2026-09-03.",
+      "lifecycle": "decided",
+      "choice": "Stripe",
+      "title": "Switch the Atlas payments provider to Stripe",
+      "decided_at": "2026-09-03T10:02",
+      "effective_at": null,
+      "rationale": null,
+      "decided_by": "p-alex-chen",
+      "evidence": [
+        { "document": "atlas-sync-2026-09-03", "role": "decision", "quote": "If that happens we might switch to Stripe." }
+      ]
+    },
+    {
+      "claim_id": "dec-atlas-stripe",
+      "kind": "decision",
+      "project": "proj-atlas",
+      "topic": "payments.provider",
+      "review_status": "approved",
+      "lifecycle": "decided",
+      "choice": "Stripe",
+      "title": "Move the Atlas payments provider from Braintree to Stripe",
+      "decided_at": "2026-10-02T14:08",
+      "effective_at": "2026-10-06",
+      "rationale": "The Braintree plan cannot do multi-currency payouts needed for the EU launch, and Stripe's quote is about 0.4 points lower than Braintree's new pricing.",
+      "decided_by": "p-dana-ortiz",
+      "evidence": [
+        { "document": "atlas-provider-review-2026-10-02", "role": "decision", "quote": "Decision: Atlas moves its payments provider from Braintree to Stripe, effective October 6." },
+        { "document": "atlas-provider-review-2026-10-02", "role": "decided_by", "quote": "Dana Ortiz: Decision: Atlas moves its payments provider" },
+        { "document": "atlas-provider-review-2026-10-02", "role": "rationale", "quote": "Our Braintree plan cannot do multi-currency payouts, and Stripe can." },
+        { "document": "atlas-provider-review-2026-10-02", "role": "rationale", "quote": "Stripe's quote is about 0.4 points lower than Braintree's new pricing." }
+      ]
+    },
+    {
+      "claim_id": "sup-atlas-provider-2026-10-06",
+      "kind": "supersession",
+      "project": "proj-atlas",
+      "topic": "payments.provider",
+      "review_status": "approved",
+      "new_decision": "dec-atlas-stripe",
+      "old_decision": "dec-atlas-braintree",
+      "effective_at": "2026-10-06",
+      "evidence": [
+        { "document": "atlas-provider-review-2026-10-02", "role": "replacement", "quote": "Atlas moves its payments provider from Braintree to Stripe, effective October 6." }
+      ]
+    },
+    {
+      "claim_id": "dec-atlas-sift",
+      "kind": "decision",
+      "project": "proj-atlas",
+      "topic": "payments.fraud_screening",
+      "review_status": "approved",
+      "lifecycle": "decided",
+      "choice": "Sift",
+      "title": "Screen Atlas card payments with Sift",
+      "decided_at": "2026-10-05",
+      "effective_at": "2026-10-05",
+      "rationale": "Pilot chargebacks doubled in September and manual review cannot keep up.",
+      "decided_by": null,
+      "evidence": [
+        { "document": "atlas-fraud-screening", "role": "decision", "quote": "Atlas will screen card payments with Sift, effective October 5, 2026." },
+        { "document": "atlas-fraud-screening", "role": "rationale", "quote": "Chargebacks on the pilot doubled in September, and manual review cannot keep up." }
+      ]
+    },
+    {
+      "claim_id": "own-atlas-migration-marcus",
+      "kind": "ownership",
+      "project": "proj-atlas",
+      "topic": "migration.owner",
+      "review_status": "approved",
+      "assignee": "p-marcus-lee",
+      "effective_from": "2026-10-15",
+      "effective_to": null,
+      "handoff_from": "own-asg-001",
+      "evidence": [
+        { "document": "atlas-migration-handoff", "role": "assignment", "quote": "Effective October 15, Marcus Lee takes over as migration owner for Atlas." },
+        { "document": "atlas-migration-handoff", "role": "handoff", "quote": "Effective October 15, Marcus Lee takes over as migration owner for Atlas." }
+      ]
+    },
+    {
+      "claim_id": "dec-beacon-mixpanel",
+      "kind": "decision",
+      "project": "proj-beacon",
+      "topic": "analytics.provider",
+      "review_status": "approved",
+      "lifecycle": "decided",
+      "choice": "Mixpanel",
+      "title": "Use Mixpanel for Beacon product analytics",
+      "decided_at": "2026-07-08",
+      "effective_at": "2026-07-08",
+      "rationale": "The mobile team already knows Mixpanel and its funnel reports cover the launch metrics.",
+      "decided_by": null,
+      "evidence": [
+        { "document": "beacon-analytics-decision", "role": "decision", "quote": "Beacon will use Mixpanel for product analytics from July 8, 2026." },
+        { "document": "beacon-analytics-decision", "role": "rationale", "quote": "The mobile team already knows Mixpanel, and its funnel reports cover the launch metrics." }
+      ]
+    },
+    {
+      "claim_id": "dec-beacon-posthog",
+      "kind": "decision",
+      "project": "proj-beacon",
+      "topic": "analytics.provider",
+      "review_status": "approved",
+      "lifecycle": "decided",
+      "choice": "PostHog",
+      "title": "Replace Mixpanel with PostHog for Beacon product analytics",
+      "decided_at": "2026-10-10",
+      "effective_at": "2026-11-01",
+      "rationale": "PostHog can be self-hosted in the EU region, as the data residency review requires.",
+      "decided_by": "p-dana-ortiz",
+      "evidence": [
+        { "document": "beacon-analytics-switch", "role": "decision", "quote": "Beacon will replace Mixpanel with PostHog for product analytics, effective November 1, 2026." },
+        { "document": "beacon-analytics-switch", "role": "rationale", "quote": "PostHog can be self-hosted in the EU region, which the data residency review requires." },
+        { "document": "beacon-analytics-switch", "role": "decided_by", "quote": "Approved by: Dana Ortiz" }
+      ]
+    },
+    {
+      "claim_id": "sup-beacon-analytics-2026-11-01",
+      "kind": "supersession",
+      "project": "proj-beacon",
+      "topic": "analytics.provider",
+      "review_status": "approved",
+      "new_decision": "dec-beacon-posthog",
+      "old_decision": "dec-beacon-mixpanel",
+      "effective_at": "2026-11-01",
+      "evidence": [
+        { "document": "beacon-analytics-switch", "role": "replacement", "quote": "Beacon will replace Mixpanel with PostHog for product analytics, effective November 1, 2026." }
+      ]
+    },
+    {
+      "claim_id": "own-beacon-release-sam",
+      "kind": "ownership",
+      "project": "proj-beacon",
+      "topic": "release.owner",
+      "review_status": "approved",
+      "assignee": "p-sam-okafor",
+      "effective_from": "2026-11-01",
+      "effective_to": null,
+      "handoff_from": "own-asg-002",
+      "evidence": [
+        { "document": "beacon-release-plan", "role": "assignment", "quote": "Starting November 1, Sam Okafor takes over release management for Beacon from Lena Novak." },
+        { "document": "beacon-release-plan", "role": "handoff", "quote": "Starting November 1, Sam Okafor takes over release management for Beacon from Lena Novak." }
+      ]
+    },
+    {
+      "claim_id": "dec-cobalt-snowflake",
+      "kind": "decision",
+      "project": "proj-cobalt",
+      "topic": "warehouse.platform",
+      "review_status": "approved",
+      "lifecycle": "decided",
+      "choice": "Snowflake",
+      "title": "Use Snowflake as the Cobalt warehouse platform",
+      "decided_at": "2026-08-20",
+      "effective_at": null,
+      "rationale": null,
+      "decided_by": null,
+      "evidence": [
+        { "document": "cobalt-warehouse-note", "role": "decision", "quote": "Decision: Cobalt will use Snowflake as its warehouse platform." }
+      ]
+    },
+    {
+      "claim_id": "own-cobalt-pipeline-jordan",
+      "kind": "ownership",
+      "project": "proj-cobalt",
+      "topic": "pipeline.owner",
+      "review_status": "approved",
+      "assignee": "p-jordan-kim",
+      "effective_from": "2026-09-20",
+      "effective_to": null,
+      "handoff_from": null,
+      "evidence": [
+        { "document": "cobalt-roadmap-q4", "role": "assignment", "quote": "Pipeline owner: Jordan Kim." }
+      ]
+    },
+    {
+      "claim_id": "own-cobalt-pipeline-taylor",
+      "kind": "ownership",
+      "project": "proj-cobalt",
+      "topic": "pipeline.owner",
+      "review_status": "approved",
+      "assignee": "p-taylor-brooks",
+      "effective_from": "2026-09-22",
+      "effective_to": null,
+      "handoff_from": null,
+      "evidence": [
+        { "document": "cobalt-standup-2026-09-22", "role": "assignment", "quote": "Taylor Brooks owns the Cobalt ingestion pipeline." }
+      ]
+    }
+  ]
+}

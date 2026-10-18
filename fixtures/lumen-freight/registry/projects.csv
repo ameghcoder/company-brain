@@ -1,0 +1,4 @@
+project_id,name,owning_team_id,aliases,description
+proj-atlas,Atlas,t-payments,Project Atlas,Payments platform that replaces the legacy checkout service
+proj-beacon,Beacon,t-mobile,Beacon app,Customer mobile app
+proj-cobalt,Cobalt,t-data,Cobalt warehouse,Analytics data warehouse

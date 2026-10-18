@@ -1,0 +1,151 @@
+{
+  "company": {
+    "id": "lumen-freight",
+    "name": "Lumen Freight",
+    "timezone": "America/New_York"
+  },
+  "registry": {
+    "roster": "registry/roster.csv",
+    "projects": "registry/projects.csv",
+    "topics": "registry/topics.json"
+  },
+  "sources": [
+    {
+      "document_id": "roster",
+      "path": "registry/roster.csv",
+      "source_type": "csv",
+      "document_type": "roster",
+      "title": "Lumen Freight roster",
+      "event_at": "2026-06-01",
+      "projects": []
+    },
+    {
+      "document_id": "projects",
+      "path": "registry/projects.csv",
+      "source_type": "csv",
+      "document_type": "projects",
+      "title": "Lumen Freight project registry",
+      "event_at": "2026-06-01",
+      "projects": ["proj-atlas", "proj-beacon", "proj-cobalt"]
+    },
+    {
+      "document_id": "assignments",
+      "path": "registry/assignments.csv",
+      "source_type": "csv",
+      "document_type": "assignments",
+      "title": "Project role assignments",
+      "event_at": "2026-09-01",
+      "projects": ["proj-atlas", "proj-beacon", "proj-cobalt"]
+    },
+    {
+      "document_id": "atlas-adr-001-payments-provider",
+      "path": "documents/atlas-adr-001-payments-provider.md",
+      "source_type": "markdown",
+      "document_type": "document",
+      "title": "Atlas ADR-001: Payments provider",
+      "author_id": "p-alex-chen",
+      "event_at": "2026-08-12",
+      "projects": ["proj-atlas"]
+    },
+    {
+      "document_id": "atlas-sync-2026-09-03",
+      "path": "meetings/atlas-sync-2026-09-03.txt",
+      "source_type": "meeting",
+      "document_type": "meeting",
+      "title": "Atlas weekly sync, 2026-09-03",
+      "event_at": "2026-09-03T10:00",
+      "projects": ["proj-atlas"],
+      "participants": ["p-priya-raman", "p-alex-chen", "p-marcus-lee"]
+    },
+    {
+      "document_id": "cobalt-roadmap-q4",
+      "path": "documents/cobalt-roadmap-q4.md",
+      "source_type": "markdown",
+      "document_type": "document",
+      "title": "Cobalt roadmap, Q4",
+      "author_id": "p-jordan-kim",
+      "event_at": "2026-09-20",
+      "projects": ["proj-cobalt"]
+    },
+    {
+      "document_id": "cobalt-standup-2026-09-22",
+      "path": "meetings/cobalt-standup-2026-09-22.txt",
+      "source_type": "meeting",
+      "document_type": "meeting",
+      "title": "Cobalt standup, 2026-09-22",
+      "event_at": "2026-09-22T09:30",
+      "projects": ["proj-cobalt"],
+      "participants": ["p-dana-ortiz", "p-taylor-brooks", "p-jordan-kim"]
+    },
+    {
+      "document_id": "cobalt-warehouse-note",
+      "path": "documents/cobalt-warehouse-note.md",
+      "source_type": "markdown",
+      "document_type": "document",
+      "title": "Cobalt warehouse platform",
+      "author_id": "p-jordan-kim",
+      "event_at": "2026-08-20",
+      "projects": ["proj-cobalt"]
+    },
+    {
+      "document_id": "atlas-provider-review-2026-10-02",
+      "path": "meetings/atlas-provider-review-2026-10-02.txt",
+      "source_type": "meeting",
+      "document_type": "meeting",
+      "title": "Atlas payments provider review, 2026-10-02",
+      "event_at": "2026-10-02T14:00",
+      "projects": ["proj-atlas"],
+      "participants": ["p-dana-ortiz", "p-alex-chen", "p-marcus-lee", "p-priya-raman"]
+    },
+    {
+      "document_id": "atlas-fraud-screening",
+      "path": "documents/atlas-fraud-screening.md",
+      "source_type": "markdown",
+      "document_type": "document",
+      "title": "Atlas fraud screening",
+      "author_id": "p-marcus-lee",
+      "event_at": "2026-10-05",
+      "projects": ["proj-atlas"]
+    },
+    {
+      "document_id": "atlas-migration-handoff",
+      "path": "documents/atlas-migration-handoff.md",
+      "source_type": "markdown",
+      "document_type": "document",
+      "title": "Atlas migration handoff",
+      "author_id": "p-priya-raman",
+      "event_at": "2026-10-14",
+      "projects": ["proj-atlas"]
+    },
+    {
+      "document_id": "beacon-analytics-decision",
+      "path": "documents/beacon-analytics-decision.md",
+      "source_type": "markdown",
+      "document_type": "document",
+      "title": "Beacon analytics provider",
+      "author_id": "p-alex-rivera",
+      "event_at": "2026-07-08",
+      "projects": ["proj-beacon"]
+    },
+    {
+      "document_id": "beacon-analytics-switch",
+      "path": "documents/beacon-analytics-switch.md",
+      "source_type": "markdown",
+      "document_type": "document",
+      "title": "Beacon analytics: move to PostHog",
+      "author_id": "p-alex-rivera",
+      "event_at": "2026-10-10",
+      "projects": ["proj-beacon"]
+    },
+    {
+      "document_id": "beacon-release-plan",
+      "path": "documents/beacon-release-plan.md",
+      "source_type": "markdown",
+      "document_type": "document",
+      "title": "Beacon release plan, Q4",
+      "author_id": "p-lena-novak",
+      "event_at": "2026-10-12",
+      "projects": ["proj-beacon"]
+    }
+  ]
+}

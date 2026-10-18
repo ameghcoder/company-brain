@@ -31,8 +31,10 @@ similarityFunction: 'cosine'}` with `db.idx.vector.queryNodes`. With cosine, the
 | Command | What it does |
 |---|---|
 | `pnpm bootstrap` (`scripts/dev-bootstrap.sh`) | Starts Docker if needed, ensures images, installs locked deps if the lockfile changed, starts `postgres` + `falkordb` (bounded health wait), applies migrations. Safe to rerun. |
-| `pnpm check` (`scripts/dev-check.sh`) | Versions, real-service smoke checks, typecheck, lint, production build, browser-bundle secret scan, HTTP check of the built app. `--quick` skips build and HTTP. |
+| `pnpm check` (`scripts/dev-check.sh`) | Versions, real-service smoke checks, tests, typecheck, lint, production build, browser-bundle secret scan, HTTP check of the built app. `--quick` skips build and HTTP. |
 | `pnpm check:services` | Postgres + FalkorDB smoke checks only. |
+| `pnpm test` | Unit tests plus integration tests against the real services. Integration tests reset and use a separate database named `<dev database>_test` (override with `DATABASE_URL_TEST`); development data is never touched. |
+| `pnpm data:load` | Seeds the registry, ingests the fixture sources, and seeds reviewed claims in one transaction. Idempotent. Steps also run alone: `pnpm seed:registry`, `pnpm ingest`, `pnpm seed:claims`. |
 | `pnpm db:migrate` | Applies pending `src/db/migrations/*.sql` (advisory-locked, one transaction each). |
 | `pnpm check:provider` | **Paid, opt-in.** One tiny completion and one embedding. Also runs inside `pnpm check` when `CHECK_PROVIDER=1`. |
 | `pnpm dev` / `pnpm build` / `pnpm start` | Next.js on 127.0.0.1. Build and start force `NODE_ENV=production` because the cloud VM exports `NODE_ENV=development`. |

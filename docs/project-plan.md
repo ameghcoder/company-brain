@@ -7,18 +7,23 @@ Architecture: [architecture.md](architecture.md).
 
 | Label | Milestone | State |
 |---|---|---|
-| LOC-1 | Bootstrap: scaffold, local Postgres + FalkorDB, connectivity smoke checks | Done on review branch, tracked in GitHub issue #1 (provider access not verified) |
-| LOC-2 | Dataset and graph vertical slice | Not started |
+| LOC-1 | Bootstrap: scaffold, local Postgres + FalkorDB, connectivity smoke checks | Done (#1, merged); provider access not verified (#2) |
+| LOC-2 | Dataset and graph vertical slice | In progress: dataset, schema, and seeding in GitHub issue #4 |
 | LOC-3 | Real ingestion and extraction | Not started |
 | LOC-4 | Natural-language questions and answers | Not started |
 | LOC-5 | UI, verification, submission | Not started |
 
-## LOC-1 Bootstrap (current)
+## LOC-1 Bootstrap (done)
 
 Scope and evidence: GitHub issue #1 and [dev-environment.md](dev-environment.md). Open follow-up: model
 provider access is **not verified** until a working `OPENAI_AUTH_MODE` configuration exists (GitHub issue #2).
 
-## LOC-2 Dataset and graph vertical slice
+## LOC-2 Dataset and graph vertical slice (current)
+
+Delivered as three issues, each opened just before its work: (1) dataset, schema, and seeding
+(#4); (2) fresh-graph build, checks, and activation; (3) fixed graph tools and evaluation against the
+expected answers. LOC-2 includes the minimal deterministic ingestion the seeded claims need; LOC-3
+adds LLM extraction, review reports, and embeddings. Search (`search_context`) waits for embeddings.
 
 - Synthetic company: 2-3 projects, ~8-12 documents/meetings covering a decision replacement, ownership
   transfer, unapproved proposal, ambiguous alias, future-effective change, conflict, and a decision

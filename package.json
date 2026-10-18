@@ -19,7 +19,12 @@
     "check:services": "tsx scripts/check-services.ts",
     "check:provider": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 tsx scripts/check-provider.ts",
     "bootstrap": "bash scripts/dev-bootstrap.sh",
-    "check": "bash scripts/dev-check.sh"
+    "check": "bash scripts/dev-check.sh",
+    "test": "NODE_NO_WARNINGS=1 node --import tsx --test --test-concurrency=1 'src/**/*.test.ts'",
+    "seed:registry": "tsx scripts/data.ts registry",
+    "ingest": "tsx scripts/data.ts ingest",
+    "seed:claims": "tsx scripts/data.ts claims",
+    "data:load": "tsx scripts/data.ts load"
   },
   "dependencies": {
     "falkordb": "6.8.0",

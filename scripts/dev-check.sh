@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Milestone 1 checks against REAL local services. Run scripts/dev-bootstrap.sh first.
-#   scripts/dev-check.sh           services + typecheck + lint + build + HTTP check of the built app
-#   scripts/dev-check.sh --quick   services + typecheck + lint
+#   scripts/dev-check.sh           services + tests + typecheck + lint + build + HTTP check of the built app
+#   scripts/dev-check.sh --quick   services + tests + typecheck + lint
 # Paid provider requests run only when CHECK_PROVIDER=1 is set.
 set -uo pipefail
 
@@ -68,6 +68,7 @@ bundle_secret_scan() {
 
 step "tool versions and docker" versions
 step "real services (postgres + falkordb)" pnpm -s check:services
+step "tests (unit + real-service integration)" pnpm -s test
 step "typecheck" pnpm -s typecheck
 step "lint" pnpm -s lint
 if [[ "$QUICK" == 0 ]]; then

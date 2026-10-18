@@ -14,7 +14,7 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | Issue workflow, commits, closing rules | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md) |
 | How skills read domain docs | [docs/agents/domain.md](docs/agents/domain.md) |
 
-## Code map (Milestone 1)
+## Code map
 
 | Path | Responsibility |
 |---|---|
@@ -23,5 +23,11 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | `src/db/` | Postgres pool, migration runner, `migrations/*.sql` |
 | `src/graph/client.ts` | FalkorDB connection, safe graph names, idempotent index creation |
 | `src/smoke/` | Real-service smoke checks (`*.db.ts` holds their SQL) |
+| `src/time/` | Company-local times: day/minute precision, timezone, UTC instants |
+| `src/contracts/` | Shared Zod contracts (claims, evidence) |
+| `src/ingest/` | Manifest, CSV, chunkers, versioning, registry and aliases, fixture loading |
+| `src/extract/` | Claim drafts, evidence resolution, validation, claim seeding |
+| `src/test-support/` | Isolated `*_test` database for integration tests |
+| `fixtures/lumen-freight/` | Synthetic company sources, reviewed claims, independent expected answers |
 | `src/provider/openai-transport.ts` | Server-side model-provider transport |
-| `scripts/` | Bootstrap/check shell scripts and `tsx` entry points |
+| `scripts/` | Bootstrap/check shell scripts and `tsx` entry points (`data.ts`: registry, ingest, claims) |

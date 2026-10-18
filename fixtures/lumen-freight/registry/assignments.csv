@@ -1,0 +1,4 @@
+assignment_id,project_id,role,assignee_id,effective_from,effective_to,note
+asg-001,proj-atlas,migration.owner,p-priya-raman,2026-09-01,,Migration owner named at the Atlas kickoff
+asg-002,proj-beacon,release.owner,p-lena-novak,2026-06-01,,Release manager since Beacon 4.0
+asg-003,proj-cobalt,warehouse.owner,t-data,2026-07-01,,The Data Platform team owns the warehouse platform
