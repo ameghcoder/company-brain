@@ -103,6 +103,58 @@ describe("question pipeline with a scripted planner (real Postgres + FalkorDB)",
     assert.match(result.steps[1]?.notes[0] ?? "", /Nothing about "CRM vendor"/);
   });
 
+  // The test build has no vectors, so these searches are full-text only.
+  it("finds the topic a subject means by searching the records", async () => {
+    const result = await askQuestion(
+      pool,
+      { question: "What did Atlas decide about chargebacks?", as_of: AS_OF },
+      deps(scriptedPlanner(plan([step({ intent: "explain", topic: null, subject: "chargebacks" })]))),
+    );
+    assert.equal(result.outcome, "answered", JSON.stringify(result.notes));
+    assert.deepEqual(result.steps[0]?.request, { intent: "explain", project: "proj-atlas", topic: "payments.fraud_screening", at: "2026-10-18T16:00:00.000Z" });
+    assert.match(result.steps[0]?.notes[0] ?? "", /Matched "chargebacks" to Atlas/);
+    assert.equal(result.steps[0]?.search?.intent, "search");
+  });
+
+  it("asks which topic when a search matches several", async () => {
+    const result = await askQuestion(
+      pool,
+      { question: "What was decided about the migration?", as_of: AS_OF },
+      deps(scriptedPlanner(plan([step({ intent: "explain", project_mention: null, topic: null, subject: "migration" })]))),
+    );
+    assert.equal(result.outcome, "needs_clarification");
+    // Only decision topics are offered for a decision question; migration.owner is a role.
+    assert.deepEqual(result.clarification?.candidates.map((candidate) => candidate.id).sort(), ["proj-atlas/payments.provider", "proj-cobalt/warehouse.platform"]);
+    assert.equal(result.answer, null);
+  });
+
+  it("reports insufficient evidence when a search finds nothing", async () => {
+    const result = await askQuestion(
+      pool,
+      { question: "What was decided about the CRM vendor?", as_of: AS_OF },
+      deps(scriptedPlanner(plan([step({ intent: "explain", project_mention: null, topic: null, subject: "CRM vendor" })]))),
+    );
+    assert.equal(result.outcome, "insufficient_evidence");
+    assert.match(result.steps[0]?.notes[0] ?? "", /found nothing related/);
+  });
+
+  it("runs at most three graph tool calls, searches included", async () => {
+    const result = await askQuestion(
+      pool,
+      { question: "Who owns the Atlas migration and Beacon releases, and what did Atlas decide about chargebacks?", as_of: AS_OF },
+      deps(
+        scriptedPlanner(
+          plan([step({}), step({ project_mention: "proj-beacon", topic: "release.owner" }), step({ intent: "explain", topic: null, subject: "chargebacks" })]),
+        ),
+      ),
+    );
+    assert.equal(result.truncated, true);
+    assert.equal(result.outcome, "partial");
+    assert.ok(result.steps[2]?.search, "the search was the third call");
+    assert.equal(result.steps[2]?.request, null);
+    assert.match(result.steps[2]?.notes[0] ?? "", /at most 3 graph tool calls/);
+  });
+
   it("returns unavailable when the graph cannot be reached", async () => {
     const result = await askQuestion(pool, { question: "Who owns the Atlas migration?", as_of: AS_OF }, {
       ...deps(scriptedPlanner(plan([step({})]))),

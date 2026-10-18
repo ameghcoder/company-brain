@@ -43,7 +43,7 @@ similarityFunction: 'cosine'}` with `db.idx.vector.queryNodes`. With cosine, the
 | `pnpm review:apply` | Like `review:report`, but applies `fixtures/lumen-freight/review/extracted-approvals.json` and stores the claims. |
 | `pnpm embed` | **Paid; not verified (#2).** Embeds selected chunks that have no cached vector for `OPENAI_EMBEDDING_MODEL`/`OPENAI_EMBEDDING_DIMENSIONS`, validating every vector before storing a batch. |
 | `pnpm ask "<question>" [--as-of <ISO>] [--json] [--steps]` | **Paid (planning plus answer, at most one repair).** Plans, resolves, runs the fixed tools on the active build, generates a checked answer with citations (or the deterministic fallback), and logs to `qa_logs`. |
-| `pnpm eval:questions` | **Paid (one planning call per question).** Asks `fixtures/lumen-freight/expected/questions.json` through the real planner and compares with `answers.json`; writes `eval/reports/questions-*.json`. |
+| `pnpm eval:questions` | **Paid (a planning and an answer call per question, plus a query embedding when a search runs).** Asks `fixtures/lumen-freight/expected/questions.json` through the real planner and compares with `answers.json`; writes `eval/reports/questions-*.json`. |
 | `pnpm db:migrate` | Applies pending `src/db/migrations/*.sql` (advisory-locked, one transaction each). |
 | `pnpm check:provider` | **Paid, opt-in.** One tiny completion and one embedding. Also runs inside `pnpm check` when `CHECK_PROVIDER=1`. |
 | `pnpm dev` / `pnpm build` / `pnpm start` | Next.js on 127.0.0.1. Build and start force `NODE_ENV=production` because the cloud VM exports `NODE_ENV=development`. |

@@ -5,6 +5,7 @@ import type {
   ExplainFacts,
   LocalTime,
   OwnerFacts,
+  SearchFacts,
   TimelineFacts,
   ToolResponse,
 } from "@/contracts/graph-tools";
@@ -89,6 +90,13 @@ export function renderResponse(response: ToolResponse): string[] {
               break;
           }
         }
+        break;
+      }
+      case "search": {
+        const search = facts as SearchFacts;
+        for (const topic of search.topics) lines.push(`- topic ${topic.project_id}/${topic.topic} (${topic.kind}) via ${topic.chunk_ids.length} matching chunk(s)`);
+        for (const hit of search.hits) lines.push(`  match: [${hit.document_id}] ${hit.title}`);
+        for (const hit of search.related) lines.push(`  related reading (vector only): [${hit.document_id}] ${hit.title}`);
         break;
       }
       case "resolve_alias":

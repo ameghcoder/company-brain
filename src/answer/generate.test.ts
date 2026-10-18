@@ -72,7 +72,8 @@ describe("answer generation and fallback (real Postgres + FalkorDB)", () => {
 
   it("passes the checks with the deterministic fallback for every expected case", async () => {
     for (const expected of await readExpectedCases(DEFAULT_FIXTURE_ROOT)) {
-      if (expected.request.intent === "resolve_alias") continue;
+      // Alias lookups and searches never answer by themselves, so they never reach a packet.
+      if (expected.request.intent === "resolve_alias" || expected.request.intent === "search") continue;
       const response = await runRequest(pool, expected.request);
       const packet = packetFor(expected.question, [{ response, notes: [] }]);
       assert.deepEqual(checkAnswer(deterministicAnswer(packet), packet, registry), [], expected.id);

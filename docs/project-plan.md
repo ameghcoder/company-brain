@@ -48,7 +48,13 @@ runs, linking, and review (#8); embedding cache and vector projection (#9). Stil
 ## LOC-4 Natural-language questions and answers (current)
 
 Delivered as issues opened in turn: (1) planning, resolution, and `qa_logs` (#12); (2) evidence
-packet, answer generation, checks, one repair, fallback, question API (#13); (3) `search_context`.
+packet, answer generation, checks, one repair, fallback, question API (#13); (3) `search_context`
+(#14): hybrid search that selects a topic only with full-text corroboration (ADR 0005).
+Synonyms with no shared word therefore get insufficient evidence; idea for later: a reviewed
+synonym list per topic in the registry.
+Planner wording varies between runs: plan-prompt-v3 added rules after real misreads (a guessed role
+for a person question, a timeline split per topic, a "what was decided" question planned as owner).
+The server still resolves every step; the rules only reduce wrong-but-valid plans.
 Latency is ~6-12 s per answered question with `gpt-5-mini` at low reasoning; worth revisiting for
 the demo (smaller packets, streaming, or a faster answer model).
 Person-centric questions ("What does Marcus own?") have no fixed tool yet; they get a clarification

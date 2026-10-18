@@ -6,6 +6,7 @@ import type {
   ExplainFacts,
   LocalTime,
   OwnerFacts,
+  SearchFacts,
   TimelineEvent,
   TimelineFacts,
   ToolResponse,
@@ -14,7 +15,7 @@ import type {
 // Compares a tool response with an independent expected answer. Every expectation key must be
 // understood; an unknown key fails the case rather than being silently ignored.
 
-export type ExpectedCase = { id: string; question: string; request: Record<string, unknown>; expect: Record<string, unknown> };
+export type ExpectedCase = { id: string; question: string; request: Record<string, unknown>; expect: Record<string, unknown>; nl_only?: boolean };
 export type CaseResult = { id: string; question: string; ok: boolean; outcome: string; failures: string[] };
 
 const localDate = (time: LocalTime | null | undefined) => time?.value.slice(0, 10) ?? null;
@@ -79,6 +80,16 @@ export function compareCase(expected: ExpectedCase, response: ToolResponse): Cas
       case "timeline":
         compareTimeline(response.facts as TimelineFacts, expect, take, check, includesDocs);
         break;
+      case "search": {
+        const facts = response.facts as SearchFacts;
+        const topics = facts.topics.map((topic) => `${topic.project_id}/${topic.topic}`);
+        if ("topics" in expect) check(sameSet(topics, take("topics") as string[]), `topics: got [${topics.join(", ")}]`);
+        if ("topics_include" in expect) {
+          for (const topic of take("topics_include") as string[]) check(topics.includes(topic), `topics: missing ${topic} (got ${topics.join(", ")})`);
+        }
+        if ("min_topics" in expect) check(topics.length >= (take("min_topics") as number), `topics: expected at least ${String(expect.min_topics)}, got ${topics.length}`);
+        break;
+      }
       case "resolve_alias": {
         const facts = response.facts as { candidates: { id: string }[] };
         if ("candidates" in expect) check(sameSet(facts.candidates.map((c) => c.id), take("candidates") as string[]), `candidates: got ${facts.candidates.map((c) => c.id).join(", ")}`);

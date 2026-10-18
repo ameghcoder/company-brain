@@ -90,6 +90,9 @@ The planning model's proposal for one question: intents, mentions, topic keys, a
 **Clarification**:
 A specific question back to the user when a name, topic, or project fits several recorded entities; never a guess.
 
+**Topic search**:
+`search_context`: finds which registered topic a subject means when the question names none. A topic counts only if a full-text match supports it; vector-only hits are **related reading**, never a match.
+
 **Evidence packet**:
 The bounded set of graph facts, paths, conflicts, and hydrated excerpts given to the answer model for one question.
 

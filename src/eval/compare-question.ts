@@ -25,6 +25,11 @@ export function compareQuestion(expected: ExpectedCase, nl: QuestionCase, result
     return { id: expected.id, question: nl.question, ok: failures.length === 0, outcome: result.outcome, failures, request_matched: true };
   }
 
+  // A clarification needs no matching step: it must simply be what the case expects.
+  if (expected.expect.outcome === "needs_clarification" && result.outcome === "needs_clarification") {
+    return { id: expected.id, question: nl.question, ok: failures.length === 0, outcome: result.outcome, failures, request_matched: true };
+  }
+
   const topicKey = request.intent === "owner" ? "role" : "topic";
   const step = result.steps.find(
     (candidate) =>

@@ -8,7 +8,8 @@ Status: pinning, the fixed tools, hydration, and deterministic rendering (LOC-2)
 natural-language planning, deterministic resolution, multi-step execution on one pinned build, and
 `qa_logs` (LOC-4, #12: `src/retrieve/ask.ts`, `resolve-plan.ts`, `plan-prompt.ts`), and the
 evidence packet, generated answers, server checks, one repair, deterministic fallback, and
-`POST /api/question` (#13: `src/answer/`). `search_context` follows.
+`POST /api/question` (#13: `src/answer/`), and `search_context` for subjects that name no
+registered topic (#14: `src/retrieve/search.ts`).
 
 ```mermaid
 flowchart TD
@@ -17,7 +18,13 @@ flowchart TD
     C --> RS["Server resolves names, keys, and times against the registry"]
     RS --> D{"Unambiguous request?"}
     D -->|No| E["Ask a specific clarification"]
-    D -->|Yes| F["Execute allowed FalkorDB tools"]
+    D -->|Yes| S{"Subject names a registered topic?"}
+    S -->|Yes| F["Execute allowed FalkorDB tools"]
+    S -->|No| SC["search_context: full-text + vector, rank fusion"]
+    SC --> ST{"Full-text-corroborated topics"}
+    ST -->|One| F
+    ST -->|Several| E
+    ST -->|None| IE["insufficient_evidence for that step"]
     F --> G["Facts, paths, conflicts, and evidence IDs"]
     G --> H["Hydrate exact source chunks from Postgres"]
     H --> I["Assemble bounded evidence packet"]
@@ -40,7 +47,12 @@ flowchart TD
   resolves them against the registry; an ambiguous person or project yields a clarification with
   candidates, an unknown subject yields `insufficient_evidence`, and an invalid plan answers nothing.
 - "On D" means the state at the end of D; "before D" means just before D starts (company timezone).
-- At most three steps run; extra steps are dropped and the outcome is `partial`.
+- At most three steps and three graph-tool calls run, searches included; anything beyond is
+  dropped and the outcome is `partial`.
+- A search selects a topic only through a chunk that matched full-text search; vector-only hits
+  are related reading ([ADR 0005](../adr/0005-search-requires-lexical-corroboration.md)). One
+  matching topic runs the intended tool, several yield a clarification with topic candidates, none
+  yields `insufficient_evidence`. Search text is reduced to plain words before querying.
 - "Current at t" and "active at t" are evaluated inside the graph queries: a decision is current if
   decided, effective by t, and not replaced by a replacement effective by t; ownership uses
   `from <= t < to`.

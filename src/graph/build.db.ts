@@ -11,6 +11,7 @@ export type SnapshotVersion = {
   title: string;
   authorId: string | null;
   eventAt: TimePoint;
+  projectIds: string[];
 };
 export type SnapshotChunk = {
   chunkId: string;
@@ -51,8 +52,9 @@ export async function readSnapshot(client: pg.PoolClient, chunkerVersions: strin
       title: string;
       author_id: string | null;
       event_at: TimePoint;
+      project_ids: string[];
     }>(
-      `SELECT v.version_id, d.document_id, d.document_type, s.source_type, v.title, v.author_id, v.event_at
+      `SELECT v.version_id, d.document_id, d.document_type, s.source_type, v.title, v.author_id, v.event_at, v.project_ids
        FROM documents d
        JOIN sources s ON s.source_id = d.source_id
        JOIN document_versions v ON v.version_id = d.selected_version_id
@@ -95,6 +97,7 @@ export async function readSnapshot(client: pg.PoolClient, chunkerVersions: strin
         title: row.title,
         authorId: row.author_id,
         eventAt: row.event_at,
+        projectIds: row.project_ids,
       })),
       chunks: chunks.rows.map((row) => ({
         chunkId: row.chunk_id,

@@ -2,14 +2,14 @@ import type pg from "pg";
 import { z } from "zod";
 import { buildEvidencePacket, type EvidencePacket } from "@/answer/evidence-packet";
 import { generateAnswer, type GeneratedAnswer } from "@/answer/generate";
-import type { Outcome, ToolResponse } from "@/contracts/graph-tools";
+import type { Outcome, SearchFacts, ToolResponse } from "@/contracts/graph-tools";
 import { PLAN_SCHEMA_VERSION, planJsonSchema, planSchema, type Plan, type PlanStep } from "@/contracts/planning";
 import { readRegistryEntities } from "@/extract/extraction.db";
 import type { TopicRegistry } from "@/ingest/registry";
 import type { StructuredModel } from "@/provider/structured-model";
 import { buildPlanPrompt, PLAN_PROMPT_VERSION, type PlanContext } from "@/retrieve/plan-prompt";
 import { insertQaLog } from "@/retrieve/qa-log.db";
-import { resolvePlan, type Candidate, type ResolvedPlan } from "@/retrieve/resolve-plan";
+import { resolvePlan, resolveTime, type Candidate, type ResolvedPlan } from "@/retrieve/resolve-plan";
 import { executeTool, withPinnedGraph, type GraphRequest, type RunOptions } from "@/retrieve/run-request";
 import { parseInstant, toLocalTimePoint } from "@/time/company-time";
 
@@ -40,7 +40,12 @@ export type StepResult = {
   outcome: Outcome;
   response: ToolResponse | null;
   notes: string[];
+  // The search that chose this step's topic, when the question named no registered topic.
+  search?: ToolResponse;
 };
+
+// Graph-tool calls per question, searches included.
+export const MAX_TOOL_CALLS = 3;
 
 export type QuestionResult = {
   question: string;
@@ -127,23 +132,90 @@ export async function askQuestion(pool: pg.Pool, rawInput: unknown, deps: AskDep
       if (resolved.truncated) result.notes.push("Only the first three parts of the question were looked up.");
       const graphStarted = Date.now();
       const steps = resolved.steps;
+      let clarification: QuestionResult["clarification"] = null;
+      // Same conversion as resolvePlan: "on D" = end of D, ranges use their last moment.
+      const instantFor = (planStep: PlanStep): string => {
+        try {
+          const window = resolveTime(planStep.time, { asOf, timezone: deps.timezone });
+          return (window.at ?? (window.to ? new Date(window.to.getTime() - 1) : asOf)).toISOString();
+        } catch {
+          return asOf.toISOString();
+        }
+      };
+      const nameOf = (id: string) => entities.find((entity) => entity.id === id)?.name ?? id;
+      let overBudget = false;
       const pinned = await withPinnedGraph(pool, deps, async (graph) => {
         const out: StepResult[] = [];
+        let calls = 0;
+        const run = async (request: GraphRequest) => {
+          calls++;
+          return executeTool(pool, graph, request);
+        };
         for (const step of steps) {
-          if (!step.ok) {
+          if (calls >= MAX_TOOL_CALLS && (step.ok || step.search)) {
+            overBudget = true;
+            out.push({ plan_step: step.step, request: null, outcome: "insufficient_evidence", response: null, notes: [`Not looked up: at most ${MAX_TOOL_CALLS} graph tool calls run per question.`] });
+            continue;
+          }
+          if (step.ok) {
+            const response = await run(step.request);
+            out.push({ plan_step: step.step, request: step.request, outcome: response.outcome, response, notes: step.notes });
+            continue;
+          }
+          if (!step.search) {
             out.push({ plan_step: step.step, request: null, outcome: step.outcome, response: null, notes: [step.note] });
             continue;
           }
-          const response = await executeTool(pool, graph, step.request);
-          out.push({ plan_step: step.step, request: step.request, outcome: response.outcome, response, notes: step.notes });
+          // The subject matched no registered topic: search the records for which topic is meant.
+          const { project, subject } = step.search;
+          const search = await run({ intent: "search", text: subject, ...(project ? { project } : {}) });
+          const wanted = step.step.intent === "owner" ? "ownership" : "decision";
+          const candidates = ((search.facts as SearchFacts | null)?.topics ?? []).filter((topic) => topic.kind === wanted && topicLabel(deps.topics, topic) !== null);
+          const incomplete = (search.facts as SearchFacts | null)?.incomplete ?? [];
+          if (candidates.length > 1) {
+            clarification = {
+              question: `"${subject}" comes up in several recorded topics: ${candidates.map((topic) => `${nameOf(topic.project_id)} ${topicLabel(deps.topics, topic)}`).join("; ")}. Which one do you mean?`,
+              candidates: candidates.map((topic) => ({ id: `${topic.project_id}/${topic.topic}`, name: `${nameOf(topic.project_id)}: ${topicLabel(deps.topics, topic)}`, kind: "topic" })),
+            };
+            out.push({ plan_step: step.step, request: null, outcome: "needs_clarification", response: null, notes: [], search });
+            continue;
+          }
+          const match = candidates[0];
+          if (!match || calls >= MAX_TOOL_CALLS) {
+            const note = match
+              ? `Not looked up: at most ${MAX_TOOL_CALLS} graph tool calls run per question.`
+              : `${step.note} A search of the records for "${subject}" found nothing related${incomplete.length ? " (the search was incomplete)" : ""}.`;
+            if (match) overBudget = true;
+            out.push({ plan_step: step.step, request: null, outcome: "insufficient_evidence", response: null, notes: [note], search });
+            continue;
+          }
+          const at = instantFor(step.step);
+          const request: GraphRequest =
+            step.step.intent === "owner"
+              ? { intent: "owner", project: match.project_id, role: match.topic, at }
+              : { intent: "explain", project: match.project_id, topic: match.topic, at };
+          const response = await run(request);
+          out.push({
+            plan_step: step.step,
+            request,
+            outcome: response.outcome,
+            response,
+            notes: [`Matched "${subject}" to ${nameOf(match.project_id)} ${topicLabel(deps.topics, match)} by searching the records.`],
+            search,
+          });
         }
         return out;
       });
+      if (overBudget) {
+        result.truncated = true;
+        result.notes.push(`Only ${MAX_TOOL_CALLS} graph tool calls run per question.`);
+      }
       result.timings_ms.graph = Date.now() - graphStarted;
       result.build_id = pinned.buildId;
       if (pinned.ok) {
         result.steps = pinned.value;
-        result.outcome = combineOutcomes(pinned.value.map((step) => step.outcome), resolved.truncated);
+        result.outcome = combineOutcomes(pinned.value.map((step) => step.outcome), result.truncated);
+        if (clarification) result.clarification = clarification;
         if (result.outcome !== "unavailable" && result.outcome !== "needs_clarification") {
           const answerStarted = Date.now();
           result.packet = buildEvidencePacket({
@@ -194,6 +266,12 @@ export async function askQuestion(pool: pg.Pool, rawInput: unknown, deps: AskDep
     console.error(`qa_logs insert failed: ${(logError as Error).message}`);
   }
   return result;
+}
+
+function topicLabel(topics: TopicRegistry, topic: { project_id: string; topic: string; kind: string }): string | null {
+  const registry = topics.projects[topic.project_id];
+  if (topic.kind === "ownership") return registry?.ownership_roles[topic.topic]?.label ?? null;
+  return registry?.decision_topics[topic.topic] ?? null;
 }
 
 const PRECEDENCE: Outcome[] = ["unavailable", "needs_clarification", "conflicting_evidence"];

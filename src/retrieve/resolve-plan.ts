@@ -15,7 +15,16 @@ export type Candidate = { id: string; name: string; kind: string };
 
 export type StepResolution =
   | { ok: true; step: PlanStep; request: Exclude<ToolRequest, { intent: "resolve_alias" }>; notes: string[] }
-  | { ok: false; step: PlanStep; outcome: "insufficient_evidence" | "needs_clarification"; note: string; candidates: Candidate[] };
+  | {
+      ok: false;
+      step: PlanStep;
+      outcome: "insufficient_evidence" | "needs_clarification";
+      note: string;
+      candidates: Candidate[];
+      // Set when the subject matches no registered topic: search the records for it before
+      // giving up (the outcome above applies if the search finds nothing).
+      search?: { project: string | null; subject: string };
+    };
 
 export type ResolvedPlan =
   | { kind: "clarify"; question: string; candidates: Candidate[] }
@@ -77,12 +86,13 @@ export function resolvePlan(plan: Plan, ctx: ResolveContext): ResolvedPlan {
 
 function resolveStep(step: PlanStep, ctx: ResolveContext): StepResolution {
   const notes: string[] = [];
-  const fail = (outcome: "insufficient_evidence" | "needs_clarification", note: string, candidates: Candidate[] = []): StepResolution => ({
+  const fail = (outcome: "insufficient_evidence" | "needs_clarification", note: string, candidates: Candidate[] = [], search?: { project: string | null; subject: string }): StepResolution => ({
     ok: false,
     step,
     outcome,
     note,
     candidates,
+    ...(search ? { search } : {}),
   });
   const keysOf = (projectId: string) => {
     const registry = ctx.topics.projects[projectId];
@@ -112,6 +122,9 @@ function resolveStep(step: PlanStep, ctx: ResolveContext): StepResolution {
   }
   if (!projectId && ctx.context?.project) projectId = ctx.context.project;
   if (!projectId) {
+    if (step.subject && !step.topic && (step.intent === "owner" || step.intent === "explain")) {
+      return fail("insufficient_evidence", `Nothing about "${step.subject}" is recorded for any project.`, [], { project: null, subject: step.subject });
+    }
     if (step.subject && !step.topic) return fail("insufficient_evidence", `Nothing about "${step.subject}" is recorded for any project.`);
     return fail("needs_clarification", "Which project do you mean?");
   }
@@ -127,7 +140,7 @@ function resolveStep(step: PlanStep, ctx: ResolveContext): StepResolution {
   }
   if (!topic && (step.intent === "owner" || step.intent === "explain")) {
     const what = step.subject ? `"${step.subject}"` : "that subject";
-    return fail("insufficient_evidence", `Nothing about ${what} is recorded for ${projectId}.`);
+    return fail("insufficient_evidence", `Nothing about ${what} is recorded for ${projectId}.`, [], step.subject ? { project: projectId, subject: step.subject } : undefined);
   }
 
   let window: { at?: Date; from?: Date; to?: Date };

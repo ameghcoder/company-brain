@@ -1,19 +1,21 @@
 import type { FalkorDB, Graph } from "falkordb";
 import type pg from "pg";
 import { toolRequestSchema, type PathEdge, type ToolRequest, type ToolResponse } from "@/contracts/graph-tools";
-import { readActiveBuild } from "@/graph/build.db";
+import type { Embedder } from "@/embed/embed";
+import { readActiveBuild, readBuild } from "@/graph/build.db";
 import { connectFalkorDB } from "@/graph/client";
 import { readEntitiesById, resolveAlias } from "@/ingest/registry.db";
 import { explainDecision, getChanges, getOwner, getTimeline, type ToolResult } from "@/retrieve/graph-tools";
 import { collectEvidence, hydrateEvidence } from "@/retrieve/hydrate";
+import { searchContext } from "@/retrieve/search";
 
 export class RequestValidationError extends Error {
   override name = "RequestValidationError";
 }
 
-export type RunOptions = { connect?: () => Promise<FalkorDB> };
+export type RunOptions = { connect?: () => Promise<FalkorDB>; embedder?: Embedder | null };
 export type GraphRequest = Exclude<ToolRequest, { intent: "resolve_alias" }>;
-export type PinnedGraph = { buildId: string; graph: Graph };
+export type PinnedGraph = { buildId: string; graph: Graph; vectors: { model: string; dimensions: number } | null; embedder: Embedder | null };
 export type PinResult<T> = { ok: true; buildId: string; value: T } | { ok: false; buildId: string | null; note: string };
 
 // Pins the active build once and runs `fn` against it, so every tool call made for one question
@@ -30,7 +32,9 @@ export async function withPinnedGraph<T>(pool: pg.Pool, options: RunOptions, fn:
   }
   try {
     if (!(await db.list()).includes(active.graphName)) return { ok: false, buildId: active.buildId, note: "The active build's graph is missing." };
-    const value = await fn({ buildId: active.buildId, graph: db.selectGraph(active.graphName) });
+    const config = (await readBuild(pool, active.buildId))?.config.vectors;
+    const vectors = config && typeof config === "object" ? (config as { model: string; dimensions: number }) : null;
+    const value = await fn({ buildId: active.buildId, graph: db.selectGraph(active.graphName), vectors, embedder: options.embedder ?? null });
     return { ok: true, buildId: active.buildId, value };
   } catch (error) {
     return { ok: false, buildId: active.buildId, note: `The graph query failed: ${(error as Error).message}` };
@@ -55,6 +59,9 @@ export async function executeTool(pool: pg.Pool, pinned: PinnedGraph, request: G
       break;
     case "timeline":
       result = await getTimeline(pinned.graph, request);
+      break;
+    case "search":
+      result = await searchContext(pinned.graph, request, { embedder: pinned.embedder, vectors: pinned.vectors });
       break;
   }
   const sources = await hydrateEvidence(pool, collectEvidence(result.facts));

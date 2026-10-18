@@ -14,7 +14,7 @@ export async function readExpectedCases(fixtureRoot: string): Promise<ExpectedCa
 export async function runEval(pool: pg.Pool, cases: ExpectedCase[], options: RunOptions = {}): Promise<EvalReport> {
   const results: CaseResult[] = [];
   const builds = new Set<string>();
-  for (const expected of cases) {
+  for (const expected of cases.filter((item) => !item.nl_only)) {
     const response = await runRequest(pool, expected.request, options);
     if (response.build_id) builds.add(response.build_id);
     results.push(compareCase(expected, response));

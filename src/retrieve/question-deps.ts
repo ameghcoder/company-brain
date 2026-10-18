@@ -2,6 +2,7 @@ import { providerConfig } from "@/config/server-env";
 import { DEFAULT_FIXTURE_ROOT } from "@/ingest/load";
 import { loadManifest } from "@/ingest/manifest";
 import { readTopicRegistry } from "@/ingest/registry";
+import { openAiEmbedder } from "@/provider/openai-embeddings";
 import { openAiStructuredModel } from "@/provider/openai-structured";
 import type { AskDependencies } from "@/retrieve/ask";
 
@@ -24,6 +25,8 @@ export async function liveQuestionDependencies(): Promise<AskDependencies> {
   return {
     planner: openAiStructuredModel(config, { reasoningEffort: "low", maxCompletionTokens: 4_000 }),
     answerer: openAiStructuredModel(config, { reasoningEffort: "low", maxCompletionTokens: 8_000 }),
+    // Embeds search text for search_context with the same model as the chunk vectors.
+    embedder: openAiEmbedder(config),
     topics: await readTopicRegistry(manifest),
     timezone: manifest.company.timezone,
   };

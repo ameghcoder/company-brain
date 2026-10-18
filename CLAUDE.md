@@ -9,7 +9,7 @@ company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.
 
 - **Now: Milestone 4 (LOC-4) natural-language questions and answers**, as issues opened in turn:
   planning, resolution, and logs (#12); answer generation with checks, repair, and the question
-  API (#13); then `search_context`. Provider access works (#2) in `api_key` mode.
+  API (#13); `search_context` (#14). Provider access works (#2) in `api_key` mode.
 - LOC-1 to LOC-3 (provider-independent part) are done and merged. Real extraction runs (LOC-3
   remainder) were not requested yet. Do **not** start the final UI (LOC-5) until the owner asks.
   Plan: [docs/project-plan.md](docs/project-plan.md).
