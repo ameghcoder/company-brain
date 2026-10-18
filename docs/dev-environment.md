@@ -35,6 +35,7 @@ similarityFunction: 'cosine'}` with `db.idx.vector.queryNodes`. With cosine, the
 | `pnpm check:services` | Postgres + FalkorDB smoke checks only. |
 | `pnpm test` | Unit tests plus integration tests against the real services. Integration tests reset and use a separate database named `<dev database>_test` (override with `DATABASE_URL_TEST`); development data is never touched. |
 | `pnpm data:load` | Seeds the registry, ingests the fixture sources, and seeds reviewed claims in one transaction. Idempotent. Steps also run alone: `pnpm seed:registry`, `pnpm ingest`, `pnpm seed:claims`. |
+| `pnpm graph:publish` | Rebuilds a fresh graph from approved Postgres records, checks it, and activates it only if every check passes. Also separately: `pnpm graph:rebuild`, `pnpm graph:check <buildId>`, `pnpm graph:activate <buildId>`, `pnpm graph:status`. No provider calls. |
 | `pnpm db:migrate` | Applies pending `src/db/migrations/*.sql` (advisory-locked, one transaction each). |
 | `pnpm check:provider` | **Paid, opt-in.** One tiny completion and one embedding. Also runs inside `pnpm check` when `CHECK_PROVIDER=1`. |
 | `pnpm dev` / `pnpm build` / `pnpm start` | Next.js on 127.0.0.1. Build and start force `NODE_ENV=production` because the cloud VM exports `NODE_ENV=development`. |
@@ -96,6 +97,10 @@ so run provider checks after the session starts. Provider access is currently **
   restart Docker and the services; the SessionStart hook (`.claude/hooks/session-start.sh`, cloud only)
   runs `scripts/dev-bootstrap.sh` with a 300s bound and logs to `.temp/session-start.log`. Never assume
   data from an earlier session's containers exists; rerun bootstrap and the steps that load data.
+
+Each graph build is a separate graph named `<FALKORDB_GRAPH_PREFIX>__build_<buildId>`. Old builds are
+kept (they are the record of what each build contained); there is no automatic pruning yet. Tests use
+the prefix `company_brain_test` and delete only graphs under it.
 
 ## Network dependencies
 

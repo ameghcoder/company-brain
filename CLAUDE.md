@@ -8,7 +8,7 @@ company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.
 ## Current milestone and scope
 
 - **Now: Milestone 2 (LOC-2) dataset and graph vertical slice**, delivered as three issues opened in turn
-  (dataset/schema/seeding #4, then graph build and activation, then fixed graph tools). LOC-1 is done.
+  (dataset/schema/seeding #4, graph build and activation #5, then fixed graph tools). LOC-1 is done.
 - Do **not** start LLM extraction, embeddings, natural-language answering, or the final UI (LOC-3 and
   later) until the owner asks for the next milestone. Plan: [docs/project-plan.md](docs/project-plan.md).
 - Small tasks inside an authorized milestone don't need separate approval. Stop at the milestone boundary
@@ -91,6 +91,7 @@ pnpm check --quick    # skip build and HTTP check
 pnpm check:services   # Postgres + FalkorDB real-service smoke checks only
 pnpm test             # unit tests + integration tests against a separate *_test database
 pnpm data:load        # registry + ingest + reviewed claims into the dev database (idempotent)
+pnpm graph:publish    # fresh graph build -> integrity checks -> activate only if all pass
 pnpm typecheck && pnpm lint && pnpm build
 CHECK_PROVIDER=1 pnpm check   # adds paid minimal provider check (needs valid provider config)
 ```

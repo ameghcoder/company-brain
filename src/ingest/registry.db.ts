@@ -32,6 +32,13 @@ export async function writeRegistry(client: pg.PoolClient, registry: Registry): 
   return { entitiesUpserted, aliases: registry.aliases.length };
 }
 
+// This demo serves exactly one company; a second company would need tenancy work first.
+export async function ensureCompany(client: pg.PoolClient, companyId: string): Promise<void> {
+  const others = await client.query("SELECT company_id FROM app_state WHERE company_id <> $1", [companyId]);
+  if (others.rowCount) throw new Error(`app_state already holds company ${others.rows[0].company_id}`);
+  await client.query("INSERT INTO app_state (company_id) VALUES ($1) ON CONFLICT (company_id) DO NOTHING", [companyId]);
+}
+
 export async function resolveAlias(db: pg.Pool | pg.PoolClient, text: string, kind?: EntityKind): Promise<AliasResolution> {
   const result = await db.query<{ entity_id: string }>(
     `SELECT entity_id FROM entity_aliases WHERE alias_normalized = $1 AND ($2::text IS NULL OR kind = $2)`,

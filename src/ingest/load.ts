@@ -5,7 +5,7 @@ import type { ClaimWriteResult } from "@/extract/claims.db";
 import { ingestSources, type IngestResult } from "@/ingest/ingest";
 import { loadManifest, type Manifest } from "@/ingest/manifest";
 import { readRegistry, readTopicRegistry } from "@/ingest/registry";
-import { writeRegistry, type RegistrySeedResult } from "@/ingest/registry.db";
+import { ensureCompany, writeRegistry, type RegistrySeedResult } from "@/ingest/registry.db";
 
 export const DEFAULT_FIXTURE_ROOT = path.resolve("fixtures/lumen-freight");
 
@@ -31,6 +31,7 @@ export async function loadFixtures(
     const result: LoadResult = { manifest };
     if (steps.includes("registry")) {
       await readTopicRegistry(manifest);
+      await ensureCompany(client, manifest.company.id);
       result.registry = await writeRegistry(client, await readRegistry(manifest));
     }
     if (steps.includes("ingest")) result.ingest = await ingestSources(client, manifest);

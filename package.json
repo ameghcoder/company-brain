@@ -24,7 +24,12 @@
     "seed:registry": "tsx scripts/data.ts registry",
     "ingest": "tsx scripts/data.ts ingest",
     "seed:claims": "tsx scripts/data.ts claims",
-    "data:load": "tsx scripts/data.ts load"
+    "data:load": "tsx scripts/data.ts load",
+    "graph:rebuild": "tsx scripts/graph.ts rebuild",
+    "graph:check": "tsx scripts/graph.ts check",
+    "graph:activate": "tsx scripts/graph.ts activate",
+    "graph:publish": "tsx scripts/graph.ts publish",
+    "graph:status": "tsx scripts/graph.ts status"
   },
   "dependencies": {
     "falkordb": "6.8.0",

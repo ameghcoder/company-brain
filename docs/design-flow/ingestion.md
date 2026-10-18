@@ -5,8 +5,8 @@ projection, or activation code, and update it in the same change. Step details:
 [architecture.md §3](../architecture.md#3-ingestion-and-graph-activation-flow).
 
 Status: parse/version/chunk, structured claims, and the reviewed-fixture seed path exist (LOC-2,
-`src/ingest/`, `src/extract/`). LLM proposals, review reports, and embeddings are LOC-3; graph build
-and activation are the next LOC-2 issue.
+`src/ingest/`, `src/extract/`). LLM proposals, review reports, and embeddings are LOC-3. Build, check, and
+activation exist in `src/graph/` (`pnpm graph:publish`); builds record `vectors: absent` until LOC-3.
 
 ```mermaid
 flowchart TD
@@ -39,3 +39,6 @@ flowchart TD
 - Only approved claims reach the graph. `review_status` is separate from a decision's business lifecycle.
 - `rebuild-graph` makes no LLM or embedding calls; it reads cached records and vectors from Postgres.
 - Every build goes into a fresh graph; the active pointer moves only after integrity and query checks pass.
+- A build fails fast if an approved claim cites a chunk outside the selected versions (re-seed claims).
+- Ownership ends only at a stated end or an evidenced handoff; overlapping exclusive assignments are
+  reported as conflicts in the build's integrity record, not resolved.

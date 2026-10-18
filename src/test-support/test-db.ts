@@ -1,3 +1,4 @@
+import type { FalkorDB } from "falkordb";
 import pg from "pg";
 import { migrate } from "@/db/migrate";
 import { closePool, getPool } from "@/db/pool";
@@ -33,4 +34,19 @@ export async function useFreshTestDatabase(): Promise<pg.Pool> {
   await pool.query("DROP SCHEMA public CASCADE; CREATE SCHEMA public");
   await migrate(pool);
   return pool;
+}
+
+// Graph tests use their own prefix and may delete only graphs under it.
+export const TEST_GRAPH_PREFIX = "company_brain_test";
+
+export async function useTestGraphs(db: FalkorDB): Promise<void> {
+  process.env.FALKORDB_GRAPH_PREFIX = TEST_GRAPH_PREFIX;
+  await deleteTestGraphs(db);
+}
+
+export async function deleteTestGraphs(db: FalkorDB): Promise<void> {
+  if (!TEST_GRAPH_PREFIX.endsWith("_test")) throw new Error("Test graph prefix must end with _test");
+  for (const name of await db.list()) {
+    if (name.startsWith(`${TEST_GRAPH_PREFIX}__`)) await db.selectGraph(name).delete();
+  }
 }

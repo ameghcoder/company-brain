@@ -27,7 +27,8 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | `src/contracts/` | Shared Zod contracts (claims, evidence) |
 | `src/ingest/` | Manifest, CSV, chunkers, versioning, registry and aliases, fixture loading |
 | `src/extract/` | Claim drafts, evidence resolution, validation, claim seeding |
+| `src/graph/` | Build snapshot, projection, integrity checks, activation, ownership intervals |
 | `src/test-support/` | Isolated `*_test` database for integration tests |
 | `fixtures/lumen-freight/` | Synthetic company sources, reviewed claims, independent expected answers |
 | `src/provider/openai-transport.ts` | Server-side model-provider transport |
-| `scripts/` | Bootstrap/check shell scripts and `tsx` entry points (`data.ts`: registry, ingest, claims) |
+| `scripts/` | Bootstrap/check shell scripts and `tsx` entry points (`data.ts`: registry, ingest, claims; `graph.ts`: rebuild, check, activate, publish) |

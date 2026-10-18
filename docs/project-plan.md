@@ -8,7 +8,7 @@ Architecture: [architecture.md](architecture.md).
 | Label | Milestone | State |
 |---|---|---|
 | LOC-1 | Bootstrap: scaffold, local Postgres + FalkorDB, connectivity smoke checks | Done (#1, merged); provider access not verified (#2) |
-| LOC-2 | Dataset and graph vertical slice | In progress: dataset, schema, and seeding in GitHub issue #4 |
+| LOC-2 | Dataset and graph vertical slice | In progress: seeding #4 done; graph build and activation #5 |
 | LOC-3 | Real ingestion and extraction | Not started |
 | LOC-4 | Natural-language questions and answers | Not started |
 | LOC-5 | UI, verification, submission | Not started |
@@ -21,7 +21,7 @@ provider access is **not verified** until a working `OPENAI_AUTH_MODE` configura
 ## LOC-2 Dataset and graph vertical slice (current)
 
 Delivered as three issues, each opened just before its work: (1) dataset, schema, and seeding
-(#4); (2) fresh-graph build, checks, and activation; (3) fixed graph tools and evaluation against the
+(#4); (2) fresh-graph build, checks, and activation (#5); (3) fixed graph tools and evaluation against the
 expected answers. LOC-2 includes the minimal deterministic ingestion the seeded claims need; LOC-3
 adds LLM extraction, review reports, and embeddings. Search (`search_context`) waits for embeddings.
 
@@ -50,6 +50,7 @@ adds LLM extraction, review reports, and embeddings. Search (`search_context`) w
 - One screen: question input, answer, vertical timeline, evidence/graph panel (one renderer).
 - Request limits, read-only public demo, `eval` report, README, AI-assistant disclosure, recording.
 - Deployment gets its own acceptance boundary; nothing is deployed before then.
+- Graph retention: prune old build graphs once no pinned request can still use them.
 
 ## Ideas parked outside this build
 
