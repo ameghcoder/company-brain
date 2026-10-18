@@ -173,3 +173,49 @@ export async function assignmentsFor(graph: Graph, projectId: string, role: stri
     };
   });
 }
+
+export type SearchRow = { chunkId: string; versionId: string; documentId: string; title: string; projectIds: string[] };
+
+// Full-text matches on chunk bodies. `query` must already be sanitised (see fulltextQuery):
+// RediSearch syntax lives inside the parameter, separate from Cypher parameterisation.
+export async function fulltextChunks(graph: Graph, query: string, limit: number): Promise<SearchRow[]> {
+  const reply = await graph.roQuery<{ chunk_id: string; version_id: string; document_id: string; title: string; project_ids: string[] | null }>(
+    `CALL db.idx.fulltext.queryNodes('Chunk', $query) YIELD node, score
+     MATCH (node)-[:PART_OF]->(d:Document)
+     RETURN node.id AS chunk_id, d.id AS version_id, d.document_id AS document_id, d.title AS title, d.project_ids AS project_ids
+     ORDER BY score DESC, chunk_id LIMIT $limit`,
+    { params: { query, limit } },
+  );
+  return (reply.data ?? []).map((row) => ({ chunkId: row.chunk_id, versionId: row.version_id, documentId: row.document_id, title: row.title, projectIds: row.project_ids ?? [] }));
+}
+
+export async function nearestChunks(graph: Graph, vector: number[], limit: number): Promise<SearchRow[]> {
+  const reply = await graph.roQuery<{ chunk_id: string; version_id: string; document_id: string; title: string; project_ids: string[] | null }>(
+    `CALL db.idx.vector.queryNodes('Chunk', 'embedding', $limit, vecf32($vector)) YIELD node, score
+     MATCH (node)-[:PART_OF]->(d:Document)
+     RETURN node.id AS chunk_id, d.id AS version_id, d.document_id AS document_id, d.title AS title, d.project_ids AS project_ids
+     ORDER BY score ASC, chunk_id`,
+    { params: { vector, limit } },
+  );
+  return (reply.data ?? []).map((row) => ({ chunkId: row.chunk_id, versionId: row.version_id, documentId: row.document_id, title: row.title, projectIds: row.project_ids ?? [] }));
+}
+
+export type EvidencedClaimRow = { chunkId: string; claimId: string; kind: "decision" | "ownership" | "supersession"; projectId: string; topic: string };
+
+// Bounded neighbourhood: the claims each hit chunk is evidence for.
+export async function claimsEvidencedBy(graph: Graph, chunkIds: string[]): Promise<EvidencedClaimRow[]> {
+  if (!chunkIds.length) return [];
+  const reply = await graph.roQuery<{ chunk_id: string; claim_id: string; labels: string[]; project_id: string; topic: string }>(
+    `MATCH (c:Claim)-[:EVIDENCED_BY]->(k:Chunk) WHERE k.id IN $ids
+     RETURN DISTINCT k.id AS chunk_id, c.id AS claim_id, labels(c) AS labels, c.project_id AS project_id, c.topic AS topic
+     ORDER BY chunk_id, claim_id`,
+    { params: { ids: chunkIds } },
+  );
+  return (reply.data ?? []).map((row) => ({
+    chunkId: row.chunk_id,
+    claimId: row.claim_id,
+    kind: row.labels.includes("Ownership") ? "ownership" : row.labels.includes("Supersession") ? "supersession" : "decision",
+    projectId: row.project_id,
+    topic: row.topic,
+  }));
+}

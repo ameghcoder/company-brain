@@ -24,6 +24,13 @@ export const changesRequestSchema = z
 export const timelineRequestSchema = z
   .object({ intent: z.literal("timeline"), project: projectId, topic: topicKey.optional(), from: instant.optional(), to: instant.optional() })
   .refine((request) => !request.from || !request.to || parseInstant(request.from) < parseInstant(request.to), "from must be before to");
+// Finds which registered topics the records discuss for some words; it never answers by itself.
+export const searchRequestSchema = z.object({
+  intent: z.literal("search"),
+  project: projectId.optional(),
+  text: z.string().trim().min(2).max(200),
+});
+
 export const resolveAliasRequestSchema = z.object({
   intent: z.literal("resolve_alias"),
   alias: z.string().min(1).max(100),
@@ -35,6 +42,7 @@ export const toolRequestSchema = z.union([
   explainRequestSchema,
   changesRequestSchema,
   timelineRequestSchema,
+  searchRequestSchema,
   resolveAliasRequestSchema,
 ]);
 export type ToolRequest = z.infer<typeof toolRequestSchema>;
@@ -43,6 +51,7 @@ export type ExplainRequest = z.infer<typeof explainRequestSchema>;
 export type ChangesRequest = z.infer<typeof changesRequestSchema>;
 export type TimelineRequest = z.infer<typeof timelineRequestSchema>;
 export type ResolveAliasRequest = z.infer<typeof resolveAliasRequestSchema>;
+export type SearchRequest = z.infer<typeof searchRequestSchema>;
 
 export const outcomeSchema = z.enum([
   "answered",
@@ -168,11 +177,41 @@ export type TimelineFacts = { project: string; topic: string | null; events: Tim
 
 export type AliasFacts = { alias: string; candidates: { id: string; name: string; kind: string }[] };
 
+export type SearchHit = {
+  chunk_id: string;
+  document_id: string;
+  title: string;
+  fulltext_rank: number | null;
+  vector_rank: number | null;
+  rrf: number;
+};
+
+export type SearchTopic = {
+  project_id: string;
+  topic: string;
+  kind: "decision" | "ownership";
+  claim_ids: string[];
+  chunk_ids: string[];
+  rrf: number;
+};
+
+export type SearchFacts = {
+  text: string;
+  project: string | null;
+  // Chunks with a full-text match; only these can select topics.
+  hits: SearchHit[];
+  // Vector-only neighbours: related reading, never evidence that a topic is meant.
+  related: SearchHit[];
+  topics: SearchTopic[];
+  incomplete: string[];
+};
+
 type ToolFacts = {
   owner: OwnerFacts;
   explain: ExplainFacts;
   changes: ChangesFacts;
   timeline: TimelineFacts;
+  search: SearchFacts;
   resolve_alias: AliasFacts;
 };
 

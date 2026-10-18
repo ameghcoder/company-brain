@@ -7,11 +7,12 @@ company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.
 
 ## Current milestone and scope
 
-- **Now: Milestone 3 (LOC-3), provider-independent parts only** (owner's choice while #2 blocks model
-  access): extraction runs, linking, and review (#8), embedding cache and vector projection (#9).
-  Real extraction runs, real embeddings, and extracted-vs-expected comparison wait for #2.
-- LOC-1 and LOC-2 are done and merged. Do **not** start natural-language answering or the final UI
-  (LOC-4 and later) until the owner asks. Plan: [docs/project-plan.md](docs/project-plan.md).
+- **Now: Milestone 4 (LOC-4) natural-language questions and answers**, as issues opened in turn:
+  planning, resolution, and logs (#12); answer generation with checks, repair, and the question
+  API (#13); `search_context` (#14). Provider access works (#2) in `api_key` mode.
+- LOC-1 to LOC-3 (provider-independent part) are done and merged. Real extraction runs (LOC-3
+  remainder) were not requested yet. Do **not** start the final UI (LOC-5) until the owner asks.
+  Plan: [docs/project-plan.md](docs/project-plan.md).
 - Small tasks inside an authorized milestone don't need separate approval. Stop at the milestone boundary
   and report.
 - New ideas go into `docs/project-plan.md` as `LOC-n` items, not into GitHub issues or code.
@@ -98,10 +99,13 @@ pnpm demo             # the demo questions as structured requests, rendered with
 pnpm review:report    # re-interpret stored extraction runs offline -> review/reports/*.md (no writes)
 pnpm review:apply     # same, applying fixtures/lumen-freight/review/extracted-approvals.json
 pnpm graph:publish --claims extracted   # build from structured + approved extracted claims
-pnpm extract          # PAID model calls for windows without a parsed run; NOT VERIFIED until #2
-pnpm embed            # PAID embeddings for chunks missing from the cache; NOT VERIFIED until #2
+pnpm ask "<question>" # PAID: plan + checked answer with citations (needs OPENAI_AUTH_MODE=api_key); --steps shows tool results
+pnpm eval:questions   # PAID: hand-written questions through the real planner vs expected answers
+pnpm extract          # PAID model calls for windows without a parsed run (real runs not yet reviewed)
+pnpm embed            # PAID embeddings for chunks missing from the cache (corpus not yet embedded)
 pnpm typecheck && pnpm lint && pnpm build
 CHECK_PROVIDER=1 pnpm check   # adds paid minimal provider check (needs valid provider config)
+# Provider calls here need OPENAI_AUTH_MODE=api_key (no network secret is attached in this environment).
 ```
 
 Tests use `node:test` via `tsx` (`src/**/*.test.ts`). Pure logic gets unit tests. Anything touching

@@ -91,6 +91,8 @@ export async function projectSnapshot(
       author_id: version.authorId,
       timezone: version.eventAt.timezone,
       ...timeProps("event_at", version.eventAt),
+      // Lets search results be scoped to a project.
+      project_ids: version.projectIds,
     })),
   );
   await createNodes(

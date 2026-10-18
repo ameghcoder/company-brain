@@ -5,7 +5,7 @@ import { printResults, type CheckResult } from "@/smoke/check-result";
 // Opt-in, paid-but-tiny provider check: one short text completion and one short embedding.
 // Never run from build or bootstrap. Prints no credentials, headers, or provider error text.
 
-type ChatReply = { model: string; choices: Array<{ message?: { content?: string | null } }> };
+type ChatReply = { model: string; choices: Array<{ message?: { content?: string | null }; finish_reason?: string }> };
 type EmbeddingReply = { model: string; data: Array<{ embedding: number[] }> };
 
 async function run(config: ProviderConfig): Promise<CheckResult[]> {
@@ -30,10 +30,13 @@ async function run(config: ProviderConfig): Promise<CheckResult[]> {
     const reply = await openaiRequest<ChatReply>(config, "POST", "/chat/completions", {
       model: config.textModel,
       messages: [{ role: "user", content: "Reply with the single word: ok" }],
-      max_completion_tokens: 16,
+      // Reasoning models spend completion tokens on hidden reasoning first; a tiny cap can leave no
+      // visible text, so allow headroom and ask for minimal reasoning.
+      max_completion_tokens: 256,
+      reasoning_effort: "minimal",
     });
     const text = reply.choices[0]?.message?.content ?? "";
-    if (!text.trim()) throw new ProviderError("empty completion", undefined);
+    if (!text.trim()) throw new ProviderError(`empty completion (finish_reason ${reply.choices[0]?.finish_reason ?? "unknown"})`, undefined);
     return `model=${reply.model}, ${text.trim().length} chars returned`;
   });
 

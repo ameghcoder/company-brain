@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, it } from "node:test";
 import { DEFAULT_FIXTURE_ROOT } from "@/ingest/load";
 import { loadManifest } from "@/ingest/manifest";
-import { readRegistry } from "@/ingest/registry";
+import { readRegistry, readTopicRegistry } from "@/ingest/registry";
 import { parseInstant } from "@/time/company-time";
 
 // The expected answers must stay independent of the claim fixtures: they may only name
@@ -15,6 +15,10 @@ describe("independent expected answers", () => {
     const registry = await readRegistry(manifest);
     const documents = new Set(manifest.sources.map((source) => source.document_id));
     const entities = new Set(registry.entities.map((entity) => entity.entityId));
+    const topicRegistry = await readTopicRegistry(manifest);
+    const topicKeys = new Map(
+      Object.entries(topicRegistry.projects).map(([id, project]) => [id, new Set([...Object.keys(project.decision_topics), ...Object.keys(project.ownership_roles)])]),
+    );
     const text = await readFile(path.join(DEFAULT_FIXTURE_ROOT, "expected/answers.json"), "utf8");
     const answers = JSON.parse(text) as { cases: { id: string; request: Record<string, string>; expect: unknown }[] };
 
@@ -26,6 +30,12 @@ describe("independent expected answers", () => {
       if (value && typeof value === "object") return Object.entries(value).forEach(([k, v]) => visit(v, k));
       if (typeof value !== "string") return;
       if (key?.endsWith("documents") || key === "decided_in_document") assert.ok(documents.has(value), `unknown document ${value}`);
+      // Search topics are "project/topic" pairs.
+      if (key === "topics" || key === "topics_include") {
+        const [project, topic] = value.split("/");
+        assert.ok(project && topic && topicKeys.get(project)?.has(topic), `unknown topic ${value}`);
+        return;
+      }
       if (/^(p|t|proj)-/.test(value)) assert.ok(entities.has(value), `unknown entity ${value}`);
     };
     for (const answer of answers.cases) {

@@ -35,7 +35,9 @@
     "extract": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 tsx scripts/extract.ts run",
     "review:report": "tsx scripts/extract.ts report",
     "review:apply": "tsx scripts/extract.ts apply",
-    "embed": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 tsx scripts/embed.ts"
+    "embed": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 tsx scripts/embed.ts",
+    "ask": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 tsx scripts/ask.ts",
+    "eval:questions": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 tsx scripts/eval-questions.ts"
   },
   "dependencies": {
     "falkordb": "6.8.0",

@@ -36,7 +36,7 @@ describe("fixed graph tools (real Postgres + FalkorDB)", () => {
     const report = await runEval(pool, await readExpectedCases(DEFAULT_FIXTURE_ROOT));
     const failures = report.results.filter((result) => !result.ok).map((result) => `${result.id}: ${result.failures.join("; ")}`);
     assert.deepEqual(failures, []);
-    assert.equal(report.passed, 21);
+    assert.equal(report.passed, 24);
     assert.equal(report.build_ids.length, 1, "every request pinned the same build");
   });
 
@@ -69,6 +69,14 @@ describe("fixed graph tools (real Postgres + FalkorDB)", () => {
       assert.match(path.from, /^[a-z]/, "paths use stable application IDs");
       assert.match(path.to, /^[a-z]/);
     }
+  });
+
+  it("treats search text as words, never as query syntax", async () => {
+    const response = await runRequest(pool, { intent: "search", text: "@{x} | -* ~ chargebacks\") //" });
+    assert.equal(response.outcome, "answered");
+    const facts = response.facts as { topics: { topic: string }[]; incomplete: string[] };
+    assert.deepEqual(facts.topics.map((topic) => topic.topic), ["payments.fraud_screening"]);
+    assert.match(facts.incomplete.join(" "), /no vector index/);
   });
 
   it("rejects malformed requests before touching the graph", async () => {

@@ -42,10 +42,18 @@ similarityFunction: 'cosine'}` with `db.idx.vector.queryNodes`. With cosine, the
 | `pnpm review:report` | Re-interprets stored runs offline (no calls, no writes) and writes the review report. Needs only `OPENAI_TEXT_MODEL` to select runs. |
 | `pnpm review:apply` | Like `review:report`, but applies `fixtures/lumen-freight/review/extracted-approvals.json` and stores the claims. |
 | `pnpm embed` | **Paid; not verified (#2).** Embeds selected chunks that have no cached vector for `OPENAI_EMBEDDING_MODEL`/`OPENAI_EMBEDDING_DIMENSIONS`, validating every vector before storing a batch. |
+| `pnpm ask "<question>" [--as-of <ISO>] [--json] [--steps]` | **Paid (planning plus answer, at most one repair).** Plans, resolves, runs the fixed tools on the active build, generates a checked answer with citations (or the deterministic fallback), and logs to `qa_logs`. |
+| `pnpm eval:questions` | **Paid (a planning and an answer call per question, plus a query embedding when a search runs).** Asks `fixtures/lumen-freight/expected/questions.json` through the real planner and compares with `answers.json`; writes `eval/reports/questions-*.json`. |
 | `pnpm db:migrate` | Applies pending `src/db/migrations/*.sql` (advisory-locked, one transaction each). |
 | `pnpm check:provider` | **Paid, opt-in.** One tiny completion and one embedding. Also runs inside `pnpm check` when `CHECK_PROVIDER=1`. |
 | `pnpm dev` / `pnpm build` / `pnpm start` | Next.js on 127.0.0.1. Build and start force `NODE_ENV=production` because the cloud VM exports `NODE_ENV=development`. |
 | `pnpm typecheck` / `pnpm lint` | `tsc --noEmit` / ESLint flat config from `eslint-config-next`. |
+
+`POST /api/question` with `{ "question": "...", "as_of"?: "<ISO>", "context"?: {project, topic} }`
+returns the public answer shape (outcome, answer items with citation IDs, citations, timeline, paths,
+incompleteness flags). The server process needs the provider configuration (`OPENAI_AUTH_MODE=api_key`
+here). Questions over 500 characters are rejected; rate limiting arrives with the public demo (LOC-5).
+Answers take roughly 6-12 s, around 20 s when a repair is needed.
 
 Bootstrap never runs ingestion, extraction, embeddings, graph rebuilds, or model calls. After a fresh
 session or a new database, load the demo data deliberately: `pnpm data:load && pnpm graph:publish`.
@@ -92,8 +100,15 @@ Compose, its hosts become the service names `postgres` and `falkordb` instead of
 `OPENAI_EMBEDDING_MODEL`, and `OPENAI_EMBEDDING_DIMENSIONS` have no defaults. The two embedding
 settings also tell graph builds which cached vectors to project (set both or neither); they and are recorded only
 after `pnpm check:provider` passes. Network secrets are not available to the environment setup script,
-so run provider checks after the session starts. Provider access is currently **not verified**
-(GitHub issue #2).
+so run provider checks after the session starts.
+
+Verified on 2026-10-18 (#2) in `api_key` mode: `gpt-5-mini` (served as `gpt-5-mini-2025-08-07`) and
+`text-embedding-3-small` at 1536 dimensions. `gpt-5-mini` is a reasoning model: hidden reasoning
+uses completion tokens, so tiny `max_completion_tokens` caps return empty text; set
+`reasoning_effort` and leave headroom. In this cloud environment no network secret is attached for
+`api.openai.com`, so commands that call the provider need `OPENAI_AUTH_MODE=api_key` (set it in the
+environment settings, or prefix the command). In that mode the key is a plain variable readable by
+anything in the VM; a network secret avoids that.
 
 ## Database lifecycle
 
