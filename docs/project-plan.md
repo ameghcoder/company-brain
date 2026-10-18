@@ -9,7 +9,7 @@ Architecture: [architecture.md](architecture.md).
 |---|---|---|
 | LOC-1 | Bootstrap: scaffold, local Postgres + FalkorDB, connectivity smoke checks | Done (#1, merged); provider access not verified (#2) |
 | LOC-2 | Dataset and graph vertical slice | Done on review branch: #4, #5, #6 |
-| LOC-3 | Real ingestion and extraction | Pipeline done (#8, #9); corpus embedded; real extraction runs not yet requested |
+| LOC-3 | Real ingestion and extraction | Done: pipeline #8, #9; corpus embedded; real extraction runs reviewed and compared (#22) |
 | LOC-4 | Natural-language questions and answers | Done and merged: #12, #13, #14 (PR #15) |
 | LOC-5 | UI, verification, submission | Built: UI #16, limits and retention #17, README/disclosure/verification #18; recording and deployment are the owner's |
 
@@ -33,13 +33,24 @@ adds LLM extraction, review reports, and embeddings. Search (`search_context`) w
 - `rebuild-graph`, `check-graph`, `activate-graph`: fresh graph per build, integrity checks, pointer flip.
 - Fixed graph tools answering the three main questions without an LLM.
 
-## LOC-3 Real ingestion and extraction (current)
+## LOC-3 Real ingestion and extraction (done)
 
 The owner chose to build the provider-independent parts while #2 blocks model access: extraction
 runs, linking, and review (#8); embedding cache and vector projection (#9). Still to do once
 #2 works: run the model over the corpus, review its proposals in the approvals file, publish an
 `--claims extracted` build, run `pnpm eval` against it, and `pnpm embed` the chunks. Hybrid
 `search_context` (query embeddings at question time) belongs with LOC-4.
+
+Real runs (#22, `gpt-5-mini`). extract-prompt-v1 produced sentence-like choices, put "replacement"
+and "handoff" evidence on claims where those roles do not apply (validation would have kept 4 claims
+pending), and missed the Mixpanel→PostHog link. Two fixes followed. Linking now moves replacement
+quotes to the derived replacement claim and drops misplaced ones with a review note, and it flags
+assignments that restate an open one. extract-prompt-v2 asks for short option names.
+
+v2 gave 16 claims: 12 approved as-is, 1 corrected (decision time), and 3 rejected (a roadmap
+milestone, an open task, a restated register assignment). The `--claims extracted` build passes
+its checks and `pnpm eval` gives 24/24 on it. The demo still runs on the fixture build until the
+owner chooses otherwise.
 
 - Parsers and chunkers (heading-aware documents, turn-aware meetings, CSV evidence rows), version hashes.
 - `extract` with persisted raw output and full cache keys; `review:claims` report plus approvals file.

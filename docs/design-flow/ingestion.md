@@ -47,6 +47,10 @@ flowchart TD
 - Seeding is all-or-nothing: one invalid claim rejects the whole set and nothing is written.
 - An extraction cache key covers the window content, chunker versions, schema and prompt versions,
   model, and registry revision; only a `parsed` run is reused, `failed`/`invalid` runs are retried.
+- Linking turns `replaces_choice`/`takes_over_from` into explicit links within one project and topic.
+  Replacement quotes move to the derived replacement claim. Quotes in a role that does not apply
+  (replacement on an unlinked decision, handoff without a predecessor) are dropped with a review
+  note, and an assignment restating an open one for the same holder is flagged for the reviewer.
 - Extracted claims are re-derived from stored runs plus the approvals file on every `extract` or
   `review:apply`, so claim IDs and reviewer decisions are stable. Proposals that fail evidence or
   window checks never become claims; claims that fail validation stay `pending`, even if approved.

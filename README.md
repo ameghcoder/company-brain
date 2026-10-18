@@ -25,8 +25,10 @@ More screenshots: [timeline](docs/screenshots/q4-timeline.png),
    - each claim cites exact quoted spans;
    - each is validated before it is approved.
 
-   An LLM extraction path with a review file exists too, but the demo uses a curated set of fixture
-   claims written from the sources (see the [AI disclosure](docs/ai-disclosure.md)).
+   `gpt-5-mini` can also extract claims from the prose (`pnpm extract`), with every proposal reviewed
+   in a versioned approvals file. A build from the reviewed extracted claims passes the same 24
+   expected-answer cases. The demo runs on a curated set of fixture claims written from the sources
+   (see the [AI disclosure](docs/ai-disclosure.md)).
 2. **Project.** Each build writes approved claims into a fresh FalkorDB graph and runs integrity
    checks. Only a build that passes its checks becomes active, so a failed build never replaces a
    working one.
@@ -123,7 +125,9 @@ expected-answer cases that cover it, with the latest results. Known limitations:
 - The planner's wording varies between runs. The server resolves every plan, but a wrong plan that
   still resolves cleanly is possible.
 - Rate limits are in memory, per server process.
-- No real extraction run feeds the demo; it uses reviewed fixture claims.
+- The demo's active build uses the curated fixture claims. Extracted claims are available as a
+  separate build (`pnpm graph:publish --claims extracted`); their review decisions were drafted by
+  Claude Code and await the owner's confirmation.
 - Not deployed.
 
 ## AI assistance

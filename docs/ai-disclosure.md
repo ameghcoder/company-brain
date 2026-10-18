@@ -35,8 +35,12 @@ show.
 | `gpt-5-mini` | One planning call per question (intents, names, topic keys, time words); wording the answer from the evidence packet; at most one repair | Choosing graph queries, writing Cypher, resolving names or dates, deciding outcomes |
 | `text-embedding-3-small` (1536 dimensions) | Embedding chunks once (cached in Postgres) and the search text when a question names no known topic | Selecting a topic on its own: a full-text match must back it up |
 
-An LLM claim-extraction path exists (`pnpm extract`, with stored raw output and a review file), but no
-real extraction run feeds the demo. The demo answers from the curated fixture claims.
+`gpt-5-mini` also extracts claims from the prose sources (`pnpm extract`; raw output stored before
+parsing). Real runs were made and reviewed on 2026-10-18 (#22). The review decisions in
+`fixtures/lumen-freight/review/extracted-approvals.json` were drafted by Claude Code, judged only
+against each claim's quoted evidence and the sources **(owner to confirm)**. A build from the
+extracted claims passes all 24 expected-answer cases, but the demo's active build still uses the
+curated fixture claims.
 
 ## What the server guarantees regardless of the model
 
