@@ -30,6 +30,7 @@
     "graph:activate": "tsx scripts/graph.ts activate",
     "graph:publish": "tsx scripts/graph.ts publish",
     "graph:status": "tsx scripts/graph.ts status",
+    "graph:prune": "tsx scripts/graph.ts prune",
     "eval": "tsx scripts/eval.ts",
     "demo": "tsx scripts/demo.ts",
     "extract": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 tsx scripts/extract.ts run",

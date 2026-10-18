@@ -113,3 +113,7 @@ One complete projection of selected document versions and approved claims into a
 
 **Active build**:
 The graph build that new questions pin; it changes only after a build passes integrity checks.
+
+**Retired build**:
+A build that was active and has been replaced; its graph is kept until `graph:prune` removes it after a grace period, except the most recent one, kept for rollback.
+_Avoid_: Old build

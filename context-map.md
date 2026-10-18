@@ -19,6 +19,7 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | Path | Responsibility |
 |---|---|
 | `app/` | One-screen UI (`page.tsx`), `/api/question`, `/api/health` |
+| `src/server/` | Question API handler and public-demo limits (size, rate, concurrency, daily budget) |
 | `src/components/` | UI client components (question app, React Flow path graph, layout); `ui/` holds shadcn/ui components |
 | `src/config/server-env.ts` | Zod-validated server-only configuration |
 | `src/db/` | Postgres pool, migration runner, `migrations/*.sql` |
@@ -29,7 +30,7 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | `src/ingest/` | Manifest, CSV, chunkers, versioning, registry and aliases, fixture loading |
 | `src/extract/` | Claim drafts, evidence resolution, validation, seeding; extraction windows, prompt, cache keys, runs, interpretation, linking, approvals, review report |
 | `src/embed/` | Embedding cache: embed missing chunk inputs, validate vectors |
-| `src/graph/` | Build snapshot, projection, integrity checks, activation, ownership intervals |
+| `src/graph/` | Build snapshot, projection, integrity checks, activation, ownership intervals, graph retention (`prune.ts`) |
 | `src/graph/queries.ts` | Fixed, parameterised Cypher read templates |
 | `src/retrieve/` | Question planning and resolution (`ask.ts`), request pinning, graph tools, hybrid `search_context` (`search.ts`), evidence hydration, alias resolution, `qa_logs` |
 | `src/answer/` | Evidence packet, answer prompt and checks, one repair, deterministic fallback, public response and graph node labels; tool-result rendering |

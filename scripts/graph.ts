@@ -4,17 +4,30 @@ import { readActiveBuild } from "@/graph/build.db";
 import { CLAIM_SETS, rebuildGraph, type ClaimSet } from "@/graph/build";
 import { checkGraph, type CheckReport } from "@/graph/check";
 import { connectFalkorDB } from "@/graph/client";
+import { pruneGraphs } from "@/graph/prune";
 import { DEFAULT_FIXTURE_ROOT } from "@/ingest/load";
 import { loadManifest } from "@/ingest/manifest";
 import { readTopicRegistry } from "@/ingest/registry";
 import { printResults } from "@/smoke/check-result";
 
-// Usage: tsx scripts/graph.ts <rebuild | check <buildId> | activate <buildId> | publish | status> [--claims fixture|extracted]
+const USAGE =
+  "usage: tsx scripts/graph.ts <rebuild | check <buildId> | activate <buildId> | publish | status | prune> [--claims fixture|extracted] [--keep N] [--grace-minutes M] [--dry-run]";
 // Builds read Postgres only; no model or embedding provider is called.
 const args = process.argv.slice(2);
-const claimsFlag = args.indexOf("--claims");
-const claimSetArg = claimsFlag >= 0 ? args[claimsFlag + 1] : "fixture";
-const [command, buildId] = args.filter((_, index) => claimsFlag < 0 || (index !== claimsFlag && index !== claimsFlag + 1));
+const VALUE_FLAGS = ["--claims", "--keep", "--grace-minutes"];
+const flag = (name: string) => {
+  const index = args.indexOf(name);
+  return index >= 0 ? args[index + 1] : undefined;
+};
+const positional = args.filter((arg, index) => !arg.startsWith("--") && !VALUE_FLAGS.includes(args[index - 1] ?? ""));
+const [command, buildId] = positional;
+const claimSetArg = flag("--claims") ?? "fixture";
+const count = (name: string) => {
+  const value = flag(name);
+  if (value === undefined) return undefined;
+  if (!/^\d+$/.test(value)) throw new Error(`${name} must be a whole number`);
+  return Number(value);
+};
 
 function printReport(report: CheckReport) {
   printResults(report.checks);
@@ -63,8 +76,17 @@ async function main(): Promise<boolean> {
         console.log(active ? `active build: ${active.buildId} (${active.graphName})` : "no active build");
         return true;
       }
+      case "prune": {
+        const report = await pruneGraphs(pool, db, { keep: count("--keep"), graceMinutes: count("--grace-minutes"), dryRun: args.includes("--dry-run") });
+        const verb = report.dryRun ? "would prune" : "pruned";
+        console.log(`active build: ${report.active ?? "none"} (never pruned)`);
+        for (const kept of report.kept) console.log(`kept ${kept.buildId} (${kept.reason})`);
+        for (const pruned of report.pruned) console.log(`${verb} ${pruned.buildId} -> ${pruned.graphName}${pruned.graphExisted ? "" : " (graph already gone)"}`);
+        console.log(`${report.pruned.length} build graph(s) ${verb}`);
+        return true;
+      }
       default:
-        console.error("usage: tsx scripts/graph.ts <rebuild | check <buildId> | activate <buildId> | publish | status> [--claims fixture|extracted]");
+        console.error(USAGE);
         return false;
     }
   } finally {

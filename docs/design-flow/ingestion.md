@@ -7,7 +7,8 @@ projection, or activation code, and update it in the same change. Step details:
 Status: parse/version/chunk, structured claims, the reviewed-fixture seed path, build/check/activation
 (LOC-2), and the extraction path (LOC-3, #8: windows, cached runs, interpretation, linking, review)
 exist in `src/ingest/`, `src/extract/`, `src/graph/`, and the embedding cache with vector projection
-(#9) in `src/embed/`. The live model and embedding adapters are **not verified** until #2 is fixed.
+(#9) in `src/embed/`. Provider access was verified in #2; the corpus is embedded. Graph retention
+(`graph:prune`, #17) is in `src/graph/prune.ts`.
 
 ```mermaid
 flowchart TD
@@ -31,8 +32,10 @@ flowchart TD
     H -->|Approved| J["Postgres claims and cached embeddings"]
     J --> K["Build a fresh FalkorDB graph"]
     K --> L{"Integrity and query checks"}
-    L -->|Pass| M["Activate completed graph build"]
+    L -->|Pass| M["Activate completed graph build; previous build retired"]
     L -->|Fail| N["Keep previous build active"]
+    M --> PR["graph:prune (CLI): delete graphs of retired or unused builds after a grace period"]
+    N --> PR
 ```
 
 ## Invariants
@@ -55,6 +58,11 @@ flowchart TD
   configured, a build needs a cached vector for every selected chunk or refuses before creating a
   graph; without settings it records `vectors: absent`.
 - Every build goes into a fresh graph; the active pointer moves only after integrity and query checks pass.
+- Activation records when the previous build retired. `graph:prune` deletes a graph only when its
+  build is not active, is not the most recently retired checked build (kept for rollback; `--keep`),
+  and has been retired or unused longer than the grace period (default 10 minutes, so a request
+  pinned to it has finished). Graph names come from build rows under this environment's prefix; the
+  rows stay with `pruned_at` set, and a pruned build can never be activated again.
 - A build fails fast if an approved claim cites a chunk outside the selected versions (re-seed claims).
 - Ownership ends only at a stated end or an evidenced handoff; overlapping exclusive assignments are
   reported as conflicts in the build's integrity record, not resolved.
