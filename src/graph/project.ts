@@ -238,3 +238,17 @@ export async function projectSnapshot(
     ),
   );
 }
+
+// Sets Chunk.embedding from cached vectors and indexes it for cosine similarity search.
+export async function projectVectors(graph: Graph, vectors: Map<string, number[]>, dimensions: number): Promise<void> {
+  const rows = [...vectors].map(([id, v]) => ({ id, v }));
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const batch = rows.slice(i, i + BATCH);
+    const reply = await graph.query<{ updated: number }>(
+      "UNWIND $rows AS row MATCH (c:Chunk {id: row.id}) SET c.embedding = vecf32(row.v) RETURN count(c) AS updated",
+      { params: { rows: batch } },
+    );
+    if (reply.data?.[0]?.updated !== batch.length) throw new Error(`Set ${reply.data?.[0]?.updated} of ${batch.length} chunk embeddings`);
+  }
+  await ensureIndex(graph, { kind: "vector", label: "Chunk", property: "embedding", dimension: dimensions, similarity: "cosine" });
+}

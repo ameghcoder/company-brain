@@ -1,10 +1,12 @@
 import { randomBytes } from "node:crypto";
 import type { FalkorDB } from "falkordb";
 import type pg from "pg";
+import { embeddingSettings } from "@/config/server-env";
+import { readVectors } from "@/embed/embed.db";
 import { readSnapshot, finishBuild, insertBuild, type Snapshot } from "@/graph/build.db";
 import { graphName } from "@/graph/client";
 import { deriveOwnershipIntervals, type OwnershipConflict } from "@/graph/ownership-intervals";
-import { createIndexes, projectSnapshot } from "@/graph/project";
+import { createIndexes, projectSnapshot, projectVectors } from "@/graph/project";
 import { CHUNKER_VERSIONS } from "@/ingest/chunk";
 import type { TopicRegistry } from "@/ingest/registry";
 import type { Claim, OwnershipClaim } from "@/contracts/claims";
@@ -43,6 +45,19 @@ export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicReg
   }
   assertSnapshotConsistent(snapshot);
 
+  // Vectors come only from the cache. If embeddings are configured, every selected chunk must
+  // have one; otherwise the build refuses before creating anything.
+  const settings = embeddingSettings();
+  let vectors: Map<string, number[]> | undefined;
+  if (settings) {
+    const cached = await readVectors(pool, settings, snapshot.chunks.map((chunk) => chunk.embeddingInputHash));
+    const missing = snapshot.chunks.filter((chunk) => !cached.has(chunk.embeddingInputHash));
+    if (missing.length) {
+      throw new Error(`${missing.length} selected chunk(s) have no cached ${settings.model}/${settings.dimensions} embedding; run pnpm embed first`);
+    }
+    vectors = new Map(snapshot.chunks.map((chunk) => [chunk.chunkId, cached.get(chunk.embeddingInputHash) ?? []]));
+  }
+
   const isExclusive = (projectId: string, role: string) => topics.projects[projectId]?.ownership_roles[role]?.exclusive ?? false;
   const ownership = snapshot.claims.filter((claim): claim is OwnershipClaim => claim.kind === "ownership");
   const { intervals, conflicts } = deriveOwnershipIntervals(ownership, isExclusive);
@@ -62,8 +77,7 @@ export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicReg
       chunker_versions: CHUNKER_VERSIONS,
       topics_revision: topics.revision,
       claim_set: claimSet,
-      // Vector index and chunk embeddings arrive with the embedding cache (LOC-3).
-      vectors: "absent",
+      vectors: settings ? { model: settings.model, dimensions: settings.dimensions, similarity: "cosine" } : "absent",
     },
     selection: {
       versionIds: snapshot.versions.map((version) => version.versionId),
@@ -79,6 +93,7 @@ export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicReg
         Supersession: count("supersession"),
         EVIDENCED_BY: evidenceEdges,
         SUPERSEDES: count("supersession"),
+        vectors: vectors ? snapshot.chunks.length : 0,
       },
     },
   });
@@ -87,6 +102,7 @@ export async function rebuildGraph(pool: pg.Pool, db: FalkorDB, topics: TopicReg
     const graph = db.selectGraph(name);
     await createIndexes(graph);
     await projectSnapshot(graph, snapshot, new Map(intervals.map((interval) => [interval.claimId, interval])), isExclusive);
+    if (vectors && settings) await projectVectors(graph, vectors, settings.dimensions);
     await finishBuild(pool, buildId, "built", { integrity: { conflicts } });
   } catch (error) {
     await finishBuild(pool, buildId, "failed", { error: (error as Error).message });

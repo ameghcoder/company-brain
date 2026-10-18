@@ -8,7 +8,7 @@ company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.
 ## Current milestone and scope
 
 - **Now: Milestone 3 (LOC-3), provider-independent parts only** (owner's choice while #2 blocks model
-  access): extraction runs, linking, and review (#8), then embedding cache and vector projection.
+  access): extraction runs, linking, and review (#8), embedding cache and vector projection (#9).
   Real extraction runs, real embeddings, and extracted-vs-expected comparison wait for #2.
 - LOC-1 and LOC-2 are done and merged. Do **not** start natural-language answering or the final UI
   (LOC-4 and later) until the owner asks. Plan: [docs/project-plan.md](docs/project-plan.md).
@@ -99,6 +99,7 @@ pnpm review:report    # re-interpret stored extraction runs offline -> review/re
 pnpm review:apply     # same, applying fixtures/lumen-freight/review/extracted-approvals.json
 pnpm graph:publish --claims extracted   # build from structured + approved extracted claims
 pnpm extract          # PAID model calls for windows without a parsed run; NOT VERIFIED until #2
+pnpm embed            # PAID embeddings for chunks missing from the cache; NOT VERIFIED until #2
 pnpm typecheck && pnpm lint && pnpm build
 CHECK_PROVIDER=1 pnpm check   # adds paid minimal provider check (needs valid provider config)
 ```

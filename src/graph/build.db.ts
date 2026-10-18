@@ -22,6 +22,7 @@ export type SnapshotChunk = {
   body: string;
   startOffset: number;
   endOffset: number;
+  embeddingInputHash: string;
 };
 export type Snapshot = {
   companyId: string;
@@ -67,9 +68,10 @@ export async function readSnapshot(client: pg.PoolClient, chunkerVersions: strin
       body: string;
       start_offset: number;
       end_offset: number;
+      embedding_input_hash: string;
     }>(
       `SELECT c.chunk_id, c.version_id, d.document_id, c.chunker_version, c.position, c.heading_path, c.body,
-              c.start_offset, c.end_offset
+              c.start_offset, c.end_offset, c.embedding_input_hash
        FROM documents d
        JOIN chunks c ON c.version_id = d.selected_version_id AND c.chunker_version = ANY($1)
        ORDER BY d.document_id, c.position`,
@@ -104,6 +106,7 @@ export async function readSnapshot(client: pg.PoolClient, chunkerVersions: strin
         body: row.body,
         startOffset: row.start_offset,
         endOffset: row.end_offset,
+        embeddingInputHash: row.embedding_input_hash,
       })),
       claims: claims.rows.map((row) => claimSchema.parse(row)),
     };
@@ -211,4 +214,12 @@ export async function setActiveBuild(client: pg.PoolClient, buildId: string): Pr
 export async function readChunkBodies(db: pg.Pool, chunkIds: string[]): Promise<Map<string, string>> {
   const result = await db.query<{ chunk_id: string; body: string }>("SELECT chunk_id, body FROM chunks WHERE chunk_id = ANY($1)", [chunkIds]);
   return new Map(result.rows.map((row) => [row.chunk_id, row.body]));
+}
+
+export async function readChunkInputHashes(db: pg.Pool, chunkIds: string[]): Promise<Map<string, string>> {
+  const result = await db.query<{ chunk_id: string; embedding_input_hash: string }>(
+    "SELECT chunk_id, embedding_input_hash FROM chunks WHERE chunk_id = ANY($1)",
+    [chunkIds],
+  );
+  return new Map(result.rows.map((row) => [row.chunk_id, row.embedding_input_hash]));
 }

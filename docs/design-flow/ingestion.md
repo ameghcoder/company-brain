@@ -6,8 +6,8 @@ projection, or activation code, and update it in the same change. Step details:
 
 Status: parse/version/chunk, structured claims, the reviewed-fixture seed path, build/check/activation
 (LOC-2), and the extraction path (LOC-3, #8: windows, cached runs, interpretation, linking, review)
-exist in `src/ingest/`, `src/extract/`, `src/graph/`. The live model adapter is **not verified**
-until #2 is fixed; embeddings are the next LOC-3 issue.
+exist in `src/ingest/`, `src/extract/`, `src/graph/`, and the embedding cache with vector projection
+(#9) in `src/embed/`. The live model and embedding adapters are **not verified** until #2 is fixed.
 
 ```mermaid
 flowchart TD
@@ -51,6 +51,9 @@ flowchart TD
   (structured + extracted). The two prose paths never mix in one graph.
 - Only approved claims reach the graph. `review_status` is separate from a decision's business lifecycle.
 - `rebuild-graph` makes no LLM or embedding calls; it reads cached records and vectors from Postgres.
+- Embeddings are cached by embedding-input hash, model, and dimensions. With embedding settings
+  configured, a build needs a cached vector for every selected chunk or refuses before creating a
+  graph; without settings it records `vectors: absent`.
 - Every build goes into a fresh graph; the active pointer moves only after integrity and query checks pass.
 - A build fails fast if an approved claim cites a chunk outside the selected versions (re-seed claims).
 - Ownership ends only at a stated end or an evidenced handoff; overlapping exclusive assignments are
