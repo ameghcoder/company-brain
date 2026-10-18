@@ -49,6 +49,14 @@ export async function resolveAlias(db: pg.Pool | pg.PoolClient, text: string, ki
 
 export type EntityRow = { entityId: string; kind: EntityKind; canonicalName: string };
 
+export async function readEntitiesById(db: pg.Pool | pg.PoolClient, ids: string[]): Promise<EntityRow[]> {
+  const result = await db.query<{ entity_id: string; kind: EntityKind; canonical_name: string }>(
+    "SELECT entity_id, kind, canonical_name FROM entities WHERE entity_id = ANY($1) ORDER BY entity_id",
+    [ids],
+  );
+  return result.rows.map((row) => ({ entityId: row.entity_id, kind: row.kind, canonicalName: row.canonical_name }));
+}
+
 export async function readEntities(db: pg.Pool | pg.PoolClient): Promise<EntityRow[]> {
   const result = await db.query<{ entity_id: string; kind: EntityKind; canonical_name: string }>(
     "SELECT entity_id, kind, canonical_name FROM entities ORDER BY entity_id",

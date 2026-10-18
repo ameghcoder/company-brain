@@ -36,12 +36,15 @@ similarityFunction: 'cosine'}` with `db.idx.vector.queryNodes`. With cosine, the
 | `pnpm test` | Unit tests plus integration tests against the real services. Integration tests reset and use a separate database named `<dev database>_test` (override with `DATABASE_URL_TEST`); development data is never touched. |
 | `pnpm data:load` | Seeds the registry, ingests the fixture sources, and seeds reviewed claims in one transaction. Idempotent. Steps also run alone: `pnpm seed:registry`, `pnpm ingest`, `pnpm seed:claims`. |
 | `pnpm graph:publish` | Rebuilds a fresh graph from approved Postgres records, checks it, and activates it only if every check passes. Also separately: `pnpm graph:rebuild`, `pnpm graph:check <buildId>`, `pnpm graph:activate <buildId>`, `pnpm graph:status`. No provider calls. |
+| `pnpm eval` | Runs every case in `fixtures/lumen-freight/expected/answers.json` against the active build and writes `eval/reports/eval-<time>.json` (gitignored). Non-zero exit on any failure. |
+| `pnpm demo` | Prints deterministic answers, evidence excerpts, and notes for the demo questions. |
 | `pnpm db:migrate` | Applies pending `src/db/migrations/*.sql` (advisory-locked, one transaction each). |
 | `pnpm check:provider` | **Paid, opt-in.** One tiny completion and one embedding. Also runs inside `pnpm check` when `CHECK_PROVIDER=1`. |
 | `pnpm dev` / `pnpm build` / `pnpm start` | Next.js on 127.0.0.1. Build and start force `NODE_ENV=production` because the cloud VM exports `NODE_ENV=development`. |
 | `pnpm typecheck` / `pnpm lint` | `tsc --noEmit` / ESLint flat config from `eslint-config-next`. |
 
-Bootstrap never runs ingestion, extraction, embeddings, graph rebuilds, or model calls.
+Bootstrap never runs ingestion, extraction, embeddings, graph rebuilds, or model calls. After a fresh
+session or a new database, load the demo data deliberately: `pnpm data:load && pnpm graph:publish`.
 
 Expected `pnpm check:services` output (second and later runs show `exists` and `applied []`):
 
