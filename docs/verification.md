@@ -53,7 +53,7 @@ of issue #18).
 
 | Command | Result |
 |---|---|
-| `pnpm test` | 126/126 pass |
+| `pnpm test` | 131/131 pass (after #22) |
 | `pnpm check` | All checks passed: services, tests, typecheck, lint, production build, bundle secret scan, HTTP check |
 | `pnpm eval` | 24/24 on build `b20261018t061144_fffe` (fixture claims, with vectors), published from a fresh clone |
 | `OPENAI_AUTH_MODE=api_key pnpm eval:questions` | 24/24 with `gpt-5-mini`, planner prompt v3, on the same build |
@@ -65,10 +65,40 @@ Planner output varies between runs. While the v3 planner rules were being writte
 failed one question each in three different ways, which is what the rules address. Every run
 recorded with the committed prompt has passed 24/24 (five runs on 2026-10-18).
 
+## Real extraction (#22)
+
+`gpt-5-mini` over the 11 prose windows, 2026-10-18. Model output before review:
+
+| Prompt | Runs | Claims | Problems | Needed a reviewer |
+|---|---|---|---|---|
+| extract-prompt-v1 | 11 parsed | 14 | 0 | Choices as sentences (4); evidence in roles that do not apply (4 claims, which validation would have kept pending); missed the Mixpanel→PostHog link; roadmap milestone taken as a proposal; register assignment restated |
+| extract-prompt-v2 | 11 parsed | 16 | 0 | 1 time correction (decision turn 14:08, not meeting start 14:00); 3 rejections (roadmap milestone as a decision, open task as a proposal, register assignment restated) |
+
+The pipeline fixes made in response (linking moves or drops misplaced evidence roles, flags
+restated assignments) are covered by `extract/link.test.ts`.
+
+After review (12 approved as-is, 1 corrected, 3 rejected), the approved extracted claims compared
+with the fixture claims, field by field:
+- **8 of 11 claims identical, both replacement links identical, none missing, none extra.**
+- **3 minor differences:** Braintree's effective basis is `decision_date` rather than `stated` (same
+  date). The Stripe proposal time is 10:00 rather than 10:02, and it carries a rationale the
+  fixture omits. Taylor Brooks starts at 09:30 rather than at the start of the day.
+- **Eval:** `pnpm graph:publish --claims extracted` passed its checks, and `pnpm eval` gave 24/24
+  on build `b20261018t065927_57ef`. The fixture build `b20261018t061144_fffe` was then reactivated
+  (24/24).
+
+Caveat: the review decisions were drafted by Claude Code, which also wrote the expected answers.
+They were judged against the evidence, not the expected answers. The one fix found through the eval
+(the restated register assignment) is justified by the register itself. The owner has not
+confirmed them yet.
+
 ## Not verified
 
-- Real LLM extraction over the corpus, and extracted-vs-expected comparison: the path exists and is
-  tested with scripted doubles, but no real run was requested.
+- Owner confirmation of the extraction review decisions (#22).
+- Reproducing the extracted claims elsewhere: the raw v2 runs are stored only in this development
+  database. Re-extracting in a new environment calls the model again with the same cache key, so
+  claim IDs repeat even if the output differs. Re-review the claims before trusting the approvals
+  file there.
 - Deployment and behaviour behind a real proxy (`TRUST_PROXY=1`): not deployed.
 - Load: limits are in memory and per process; no load test was run.
 - An automated UI test in `pnpm test`: the browser checks were one-off Playwright runs.

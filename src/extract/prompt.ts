@@ -1,7 +1,7 @@
 import type { ExtractionWindow } from "@/extract/windows";
 
 // Bump on any change to the instructions or the payload shape; it is part of the cache key.
-export const PROMPT_VERSION = "extract-prompt-v1";
+export const PROMPT_VERSION = "extract-prompt-v2";
 
 export type RegistryContext = {
   entities: { id: string; kind: string; name: string; aliases: string[] }[];
@@ -20,14 +20,21 @@ Return only what the text states:
 Rules:
 - Use only entity IDs and topic keys from the allowed lists. Never invent IDs. If a name could match
   several entities, do not guess: add it to unresolved_mentions with the candidate IDs.
+- choice: the short name of the option chosen or proposed, as the text names it ("Stripe",
+  "Snowflake"), never a sentence. title: a short description of the decision.
 - Every claim needs evidence: chunk_id from this window and an exact quote copied character for
   character from that chunk. "supports" says which field the quote proves: decision, proposal,
-  rationale, decided_by, assignment, handoff, or replacement.
+  rationale, decided_by, assignment, or handoff. Quote the sentence that adopts a choice as
+  "decision", even when it also says what it replaces. Use "handoff" only on an ownership claim
+  with takes_over_from. Do not use "replacement": replacements are derived from replaces_choice.
 - decided_by only when the text explicitly names who decided or approved; otherwise null.
 - rationale only when the text gives a reason; otherwise null. Do not infer one.
 - Dates as YYYY-MM-DD (or YYYY-MM-DDTHH:MM for a meeting turn time), resolved against the document
   date. Use null when the text gives no date.
-- replaces_choice: the earlier choice on the same topic that this decision explicitly replaces.
+- replaces_choice: the short name of the earlier choice on the same topic that this decision
+  explicitly replaces, written as that earlier decision's choice would be. Null when the text
+  replaces something that was never a decision on this topic.
+- A dated milestone or plan for work on an option already chosen is not a decision or proposal.
 - takes_over_from: the entity ID of the previous holder when the text says someone takes over.
 - Put any doubt in "uncertainty". Do not express confidence as a number.`;
 

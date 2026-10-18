@@ -1,4 +1,38 @@
 {
-  "about": "Reviewer decisions for claims produced by real extraction runs (origin: extracted). Claim IDs come from `pnpm review:report`; they change only when a new extraction run replaces the old one. Actions: approve, reject (note required), correct (note and `set` required). Empty until the model provider works (issue #2) and real runs have been reviewed.",
-  "reviews": []
+  "about": "Reviewer decisions for claims produced by real extraction runs (origin: extracted). Claim IDs come from `pnpm review:report`; they change only when a new extraction run replaces the old one. Actions: approve, reject (note required), correct (note and `set` required). These decisions for the extract-prompt-v2 runs of 2026-10-18 (issue #22) were drafted by Claude Code, judged only against each claim's quoted evidence and the source documents; owner to confirm.",
+  "reviews": [
+    { "claim_id": "x-7ecebd03496e-d0", "action": "approve" },
+    { "claim_id": "x-bb78577ed4d5-d0", "action": "approve", "note": "Stays a proposal: 'we might switch to Stripe' and 'Let's not decide anything today'." },
+    {
+      "claim_id": "x-1068d0fd8924-d0",
+      "action": "correct",
+      "note": "The decision is stated in the 14:08 turn; 14:00 is the meeting start.",
+      "set": { "decided_at": "2026-10-02T14:08" }
+    },
+    { "claim_id": "x-1068d0fd8924-d0-r", "action": "approve" },
+    { "claim_id": "x-0ba8c40ffd08-d0", "action": "approve", "note": "The manual review queue was never a recorded decision, so nothing is superseded." },
+    {
+      "claim_id": "x-9c32c1fbc446-d0",
+      "action": "reject",
+      "note": "'Finish the Stripe webhook cutover' is an open task in the handoff note, not a proposal on the payments provider."
+    },
+    { "claim_id": "x-9c32c1fbc446-o0", "action": "approve" },
+    { "claim_id": "x-ffa0424d6a66-d0", "action": "approve" },
+    { "claim_id": "x-b29f532f08c4-d0", "action": "approve" },
+    { "claim_id": "x-b29f532f08c4-d0-r", "action": "approve" },
+    { "claim_id": "x-6583464f03bb-o0", "action": "approve" },
+    {
+      "claim_id": "x-896795309cb1-d0",
+      "action": "reject",
+      "note": "'Nightly batch jobs on Snowflake by October 31' is a roadmap milestone for the platform already decided on 2026-08-20, not a new decision."
+    },
+    { "claim_id": "x-896795309cb1-o0", "action": "approve" },
+    {
+      "claim_id": "x-896795309cb1-o1",
+      "action": "reject",
+      "note": "Restates register assignment asg-003 (Data Platform team owns the warehouse platform since 2026-07-01); not a new assignment."
+    },
+    { "claim_id": "x-9a37efc88505-o0", "action": "approve", "note": "Overlaps Jordan Kim's pipeline.owner assignment with no handoff; the build reports the conflict." },
+    { "claim_id": "x-d94c193e0286-d0", "action": "approve" }
+  ]
 }
