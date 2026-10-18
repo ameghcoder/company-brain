@@ -18,7 +18,8 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 
 | Path | Responsibility |
 |---|---|
-| `app/` | Minimal home page and `/api/health` |
+| `app/` | One-screen UI (`page.tsx`), `/api/question`, `/api/health` |
+| `src/components/` | UI client components (question app, React Flow path graph, layout); `ui/` holds shadcn/ui components |
 | `src/config/server-env.ts` | Zod-validated server-only configuration |
 | `src/db/` | Postgres pool, migration runner, `migrations/*.sql` |
 | `src/graph/client.ts` | FalkorDB connection, safe graph names, idempotent index creation |
@@ -31,7 +32,7 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | `src/graph/` | Build snapshot, projection, integrity checks, activation, ownership intervals |
 | `src/graph/queries.ts` | Fixed, parameterised Cypher read templates |
 | `src/retrieve/` | Question planning and resolution (`ask.ts`), request pinning, graph tools, hybrid `search_context` (`search.ts`), evidence hydration, alias resolution, `qa_logs` |
-| `src/answer/` | Evidence packet, answer prompt and checks, one repair, deterministic fallback, public response; tool-result rendering |
+| `src/answer/` | Evidence packet, answer prompt and checks, one repair, deterministic fallback, public response and graph node labels; tool-result rendering |
 | `src/eval/` | Expected-answer comparison and eval runner (reports in `eval/reports/`, gitignored) |
 | `src/test-support/` | Isolated `*_test` database for integration tests |
 | `fixtures/lumen-freight/` | Synthetic company sources, reviewed claims, independent expected answers |

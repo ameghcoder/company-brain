@@ -86,6 +86,15 @@ describe("answer generation and fallback (real Postgres + FalkorDB)", () => {
     assert.match(packet.facts[0]?.summary ?? "", /as of 2026-10-14/);
   });
 
+  it("quotes each evidence span of a claim, not the first span twice", async () => {
+    const response = await runRequest(pool, { intent: "explain", project: "proj-atlas", topic: "payments.provider", at: "2026-10-18T12:00:00-04:00" });
+    const packet = packetFor("Why did Atlas switch to Stripe?", [{ response, notes: [] }]);
+    const rationale = packet.citations.filter((citation) => citation.claim_id === "dec-atlas-stripe" && citation.role === "rationale");
+    assert.ok(rationale.length >= 2, JSON.stringify(rationale));
+    assert.equal(new Set(rationale.map((citation) => citation.excerpt)).size, rationale.length, "distinct spans quote distinct text");
+    assert.ok(rationale.some((citation) => /multi-currency/.test(citation.excerpt)));
+  });
+
   it("uses a model answer that passes the checks", async () => {
     const model = scriptedModel([(packet) => deterministicAnswer(packet)]);
     const result = await generateAnswer(ownerPacket, model, registry);
@@ -127,11 +136,53 @@ describe("answer generation and fallback (real Postgres + FalkorDB)", () => {
     const invented: Answer = { items: [{ text: "SECRET-REJECTED-TEXT", fact_ids: ["f1"], citation_ids: ["c99"] }] };
     const result = await askQuestion(pool, { question: "Who owns the Atlas migration?", as_of: "2026-10-18T12:00:00-04:00" }, { planner, answerer: scriptedModel([invented]), topics, timezone: TZ });
     const body = toPublicResponse(result);
-    assert.deepEqual(Object.keys(body).sort(), ["answer", "as_of", "build_id", "citations", "clarification", "incomplete", "notes", "outcome", "paths", "qa_log_id", "question", "timeline"]);
+    assert.deepEqual(Object.keys(body).sort(), ["answer", "as_of", "build_id", "citations", "clarification", "context", "incomplete", "nodes", "notes", "outcome", "paths", "qa_log_id", "question", "timeline"]);
     const text = JSON.stringify(body);
     for (const leak of ["SECRET-REJECTED-TEXT", "You plan how", "You write a short answer", "raw_plan", "prompt"]) assert.ok(!text.includes(leak), `leaked ${leak}`);
     assert.equal(body.answer?.source, "deterministic");
     assert.ok(body.citations.every((citation) => body.answer?.items.some((item) => item.citation_ids.includes(citation.citation_id))));
+  });
+
+  it("labels every path endpoint and links answer items to their edges", async () => {
+    const timeline: Plan = {
+      status: "plan",
+      clarification: null,
+      person_mentions: [],
+      steps: [{ intent: "timeline", project_mention: "proj-atlas", topic: null, subject: null, time: { kind: "all_time", date: null, end_date: null } }],
+    };
+    const planner: StructuredModel = { id: "planner-test-double", complete: async () => ({ content: JSON.stringify(timeline), servedModel: "planner-test-double" }) };
+    const body = toPublicResponse(await askQuestion(pool, { question: "Show the Atlas timeline.", as_of: "2026-10-18T12:00:00-04:00" }, { planner, topics, timezone: TZ }));
+    assert.ok(body.paths.length > 10);
+    const nodes = new Map(body.nodes.map((node) => [node.id, node]));
+    assert.equal(nodes.size, body.nodes.length, "node IDs are unique");
+    for (const path of body.paths) assert.ok(nodes.has(path.from) && nodes.has(path.to), `${path.from} -${path.rel}-> ${path.to}`);
+    // Every node has a readable label, not its ID.
+    for (const node of body.nodes) assert.notEqual(node.label, node.id, `${node.id} (${node.kind}) has no label`);
+    assert.equal(nodes.get("dec-atlas-stripe")?.label, "Decided: Stripe");
+    assert.equal(nodes.get("prop-atlas-stripe-2026-09-03")?.kind, "proposal");
+    assert.equal(nodes.get("p-marcus-lee")?.label, "Marcus Lee");
+    assert.deepEqual(body.context, { project: "proj-atlas", topic: null });
+
+    for (const entry of [...(body.answer?.items ?? []), ...body.timeline]) {
+      assert.ok(entry.edge_ids.length > 0, entry.text);
+      assert.ok(entry.edge_ids.every((index) => body.paths[index] !== undefined));
+    }
+    // The handoff event highlights Marcus's assignment, not Priya's.
+    const handoff = body.timeline.find((event) => /Marcus Lee/.test(event.text) && /migration/.test(event.text));
+    const touched = new Set(handoff?.edge_ids.flatMap((index) => [body.paths[index]?.from, body.paths[index]?.to]));
+    assert.ok(touched.has("own-atlas-migration-marcus") && !touched.has("own-asg-001"), JSON.stringify(handoff));
+  });
+
+  it("returns the resolved project and topic as follow-up context", async () => {
+    const plan: Plan = {
+      status: "plan",
+      clarification: null,
+      person_mentions: [],
+      steps: [{ intent: "owner", project_mention: "proj-atlas", topic: "migration.owner", subject: null, time: { kind: "now", date: null, end_date: null } }],
+    };
+    const planner: StructuredModel = { id: "planner-test-double", complete: async () => ({ content: JSON.stringify(plan), servedModel: "planner-test-double" }) };
+    const body = toPublicResponse(await askQuestion(pool, { question: "Who owns the Atlas migration?", as_of: "2026-10-18T12:00:00-04:00" }, { planner, topics, timezone: TZ }));
+    assert.deepEqual(body.context, { project: "proj-atlas", topic: "migration.owner" });
   });
 
   it("rejects bad input at the question API before any model call", async () => {

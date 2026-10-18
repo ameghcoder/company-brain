@@ -9,7 +9,8 @@ natural-language planning, deterministic resolution, multi-step execution on one
 `qa_logs` (LOC-4, #12: `src/retrieve/ask.ts`, `resolve-plan.ts`, `plan-prompt.ts`), and the
 evidence packet, generated answers, server checks, one repair, deterministic fallback, and
 `POST /api/question` (#13: `src/answer/`), and `search_context` for subjects that name no
-registered topic (#14: `src/retrieve/search.ts`).
+registered topic (#14: `src/retrieve/search.ts`). The home page renders the response (#16: `src/components/`):
+answer items, timeline, evidence, and the returned path edges.
 
 ```mermaid
 flowchart TD
@@ -30,7 +31,7 @@ flowchart TD
     H --> I["Assemble bounded evidence packet"]
     I --> J["Generate structured answer items"]
     J --> K{"Evidence and output checks pass?"}
-    K -->|Yes| L["Answer, timeline, paths, and sources"]
+    K -->|Yes| L["Answer, timeline, labelled path graph, and sources (rendered by the UI)"]
     K -->|No| M{"Repair already used?"}
     M -->|No| R["One constrained repair attempt"]
     R --> K
@@ -67,6 +68,10 @@ flowchart TD
   dates in an item come from its facts; factual items cite evidence; all main facts covered; no
   one-sided conflict; no asserted rationale or decider the sources lack. They reduce unsupported
   output; they do not prove entailment.
-- The public response never includes prompts, raw plans, or model output that failed checks.
+- The public response never includes prompts, raw plans, or model output that failed checks. Its
+  graph nodes are labelled from verified tool output, and each answer item and timeline event lists
+  the path edges touching its cited claims (and the cited chunks' `PART_OF` edges), which the UI
+  highlights when the item is selected.
+- A citation quotes exactly its own span: several spans of one claim and role stay separate.
 - Outcomes: `answered`, `partial`, `needs_clarification`, `conflicting_evidence`,
   `insufficient_evidence`, `unavailable`.

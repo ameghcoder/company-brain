@@ -50,10 +50,15 @@ similarityFunction: 'cosine'}` with `db.idx.vector.queryNodes`. With cosine, the
 | `pnpm typecheck` / `pnpm lint` | `tsc --noEmit` / ESLint flat config from `eslint-config-next`. |
 
 `POST /api/question` with `{ "question": "...", "as_of"?: "<ISO>", "context"?: {project, topic} }`
-returns the public answer shape (outcome, answer items with citation IDs, citations, timeline, paths,
-incompleteness flags). The server process needs the provider configuration (`OPENAI_AUTH_MODE=api_key`
-here). Questions over 500 characters are rejected; rate limiting arrives with the public demo (LOC-5).
+returns the public answer shape (outcome, answer items with citation IDs and supporting edge indices,
+citations, timeline, paths, labelled graph nodes, follow-up context, incompleteness flags). The server
+process needs the provider configuration (`OPENAI_AUTH_MODE=api_key` here). Questions over 500 characters are rejected; rate limiting arrives with the public demo (LOC-5).
 Answers take roughly 6-12 s, around 20 s when a repair is needed.
+
+The UI is the home page: `pnpm build && OPENAI_AUTH_MODE=api_key pnpm start`, then open
+`http://127.0.0.1:3000`. It calls `/api/question`; the "As of" date is sent as local noon in the
+company timezone. shadcn/ui components live in `src/components/ui/` (copied from a pinned commit; see
+`SOURCE.md` there, because the shadcn registry host is blocked from this environment).
 
 Bootstrap never runs ingestion, extraction, embeddings, graph rebuilds, or model calls. After a fresh
 session or a new database, load the demo data deliberately: `pnpm data:load && pnpm graph:publish`.

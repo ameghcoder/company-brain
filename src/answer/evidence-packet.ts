@@ -114,7 +114,7 @@ export function buildEvidencePacket({ question, asOfLocal, buildId, steps, names
       let id = citationIds.get(key);
       if (!id) {
         const source = sources.find((s) => s.chunk_id === item.chunk_id);
-        const excerpt = source?.excerpts.find((e) => e.claim_id === item.claim_id && e.role === item.role)?.text ?? "";
+        const excerpt = source?.excerpts.find((e) => e.claim_id === item.claim_id && e.role === item.role && e.start === item.start)?.text ?? "";
         id = `c${citations.length + 1}`;
         citationIds.set(key, id);
         citations.push({

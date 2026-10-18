@@ -45,7 +45,7 @@ export async function hydrateEvidence(pool: pg.Pool, evidence: EvidenceItem[]): 
         heading_path: source.headingPath,
         excerpts: [],
       } satisfies SourceExcerpt);
-    excerpt.excerpts.push({ claim_id: item.claim_id, role: item.role, text: source.body.slice(item.start, item.end) });
+    excerpt.excerpts.push({ claim_id: item.claim_id, role: item.role, start: item.start, end: item.end, text: source.body.slice(item.start, item.end) });
     excerpts.set(item.chunk_id, excerpt);
   }
   return [...excerpts.values()].sort((a, b) => a.chunk_id.localeCompare(b.chunk_id));

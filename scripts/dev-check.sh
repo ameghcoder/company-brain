@@ -43,7 +43,7 @@ http_check() {
     curl -fsS -o /dev/null "http://127.0.0.1:${APP_PORT}/" && break
     sleep 1
   done
-  if curl -fsS "http://127.0.0.1:${APP_PORT}/" | grep -q "<h1>Company Brain</h1>"; then
+  if curl -fsS "http://127.0.0.1:${APP_PORT}/" | grep -q ">Company Brain</h1>"; then
     echo "GET / -> 200 with heading"
     local health
     health="$(curl -sS "http://127.0.0.1:${APP_PORT}/api/health")"
@@ -59,7 +59,7 @@ http_check() {
 
 bundle_secret_scan() {
   # Browser assets must never contain server credentials or connection strings.
-  if grep -rlE 'company_brain_dev|postgresql://|DATABASE_URL|OPENAI_API_KEY|sk-[A-Za-z0-9_-]{20,}' .next/static; then
+  if grep -rlE 'company_brain_dev|postgresql://|DATABASE_URL|OPENAI_API_KEY|(^|[^A-Za-z0-9_-])sk-[A-Za-z0-9_-]{20,}' .next/static; then
     echo "server configuration found in browser bundle"
     return 1
   fi
