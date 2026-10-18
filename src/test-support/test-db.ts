@@ -41,6 +41,10 @@ export const TEST_GRAPH_PREFIX = "company_brain_test";
 
 export async function useTestGraphs(db: FalkorDB): Promise<void> {
   process.env.FALKORDB_GRAPH_PREFIX = TEST_GRAPH_PREFIX;
+  // Builds require cached vectors whenever embedding settings exist; graph tests start without
+  // them (each test file runs in its own process), and vector tests set their own.
+  process.env.OPENAI_EMBEDDING_MODEL = "";
+  process.env.OPENAI_EMBEDDING_DIMENSIONS = "";
   await deleteTestGraphs(db);
 }
 

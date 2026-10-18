@@ -28,6 +28,20 @@ wait_for_docker() {
   done
   return 1
 }
+# A restored snapshot keeps PID files from the old VM. If the managed-containerd PID now belongs
+# to another process, dockerd waits for a containerd that never starts, so drop stale files first.
+clear_stale_pidfiles() {
+  local pidfile=/var/run/docker/containerd/containerd.pid pid
+  if [[ -f "$pidfile" ]]; then
+    pid="$(cat "$pidfile" 2>/dev/null || true)"
+    if [[ -z "$pid" || "$(cat "/proc/$pid/comm" 2>/dev/null || true)" != "containerd" ]]; then
+      log "removing stale containerd PID file"
+      rm -f "$pidfile"
+    fi
+  fi
+  if [[ -f /var/run/docker.pid ]] && ! pgrep -x dockerd >/dev/null; then rm -f /var/run/docker.pid; fi
+}
+
 if ! docker info >/dev/null 2>&1; then
   log "starting Docker daemon"
   # The cloud VM's init script can fail (ulimit is not permitted), so fall back to dockerd directly.
@@ -37,6 +51,7 @@ if ! docker info >/dev/null 2>&1; then
   if ! wait_for_docker 10; then
     command -v dockerd >/dev/null 2>&1 || fail "Docker daemon is not running and dockerd is not installed"
     mkdir -p .temp
+    clear_stale_pidfiles
     nohup dockerd >.temp/dockerd.log 2>&1 &
     wait_for_docker "$DOCKER_WAIT_SECONDS" ||
       fail "Docker daemon did not become ready within ${DOCKER_WAIT_SECONDS}s; see .temp/dockerd.log"
