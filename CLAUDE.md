@@ -8,8 +8,8 @@ company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.
 ## Current milestone and scope
 
 - **Now: Milestone 4 (LOC-4) natural-language questions and answers**, as issues opened in turn:
-  planning, resolution, and logs (#12); then answer generation with checks and repair; then
-  `search_context`. Provider access works (#2) in `api_key` mode.
+  planning, resolution, and logs (#12); answer generation with checks, repair, and the question
+  API (#13); then `search_context`. Provider access works (#2) in `api_key` mode.
 - LOC-1 to LOC-3 (provider-independent part) are done and merged. Real extraction runs (LOC-3
   remainder) were not requested yet. Do **not** start the final UI (LOC-5) until the owner asks.
   Plan: [docs/project-plan.md](docs/project-plan.md).
@@ -99,7 +99,7 @@ pnpm demo             # the demo questions as structured requests, rendered with
 pnpm review:report    # re-interpret stored extraction runs offline -> review/reports/*.md (no writes)
 pnpm review:apply     # same, applying fixtures/lumen-freight/review/extracted-approvals.json
 pnpm graph:publish --claims extracted   # build from structured + approved extracted claims
-pnpm ask "<question>" # PAID: one planning call, then verified tool results (needs OPENAI_AUTH_MODE=api_key)
+pnpm ask "<question>" # PAID: plan + checked answer with citations (needs OPENAI_AUTH_MODE=api_key); --steps shows tool results
 pnpm eval:questions   # PAID: hand-written questions through the real planner vs expected answers
 pnpm extract          # PAID model calls for windows without a parsed run (real runs not yet reviewed)
 pnpm embed            # PAID embeddings for chunks missing from the cache (corpus not yet embedded)

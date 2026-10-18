@@ -6,8 +6,9 @@ answer validation, or response shape, and update it in the same change. Step det
 
 Status: pinning, the fixed tools, hydration, and deterministic rendering (LOC-2), plus
 natural-language planning, deterministic resolution, multi-step execution on one pinned build, and
-`qa_logs` (LOC-4, #12: `src/retrieve/ask.ts`, `resolve-plan.ts`, `plan-prompt.ts`). Answer
-generation, output checks, and repair are the next LOC-4 issue; `search_context` follows.
+`qa_logs` (LOC-4, #12: `src/retrieve/ask.ts`, `resolve-plan.ts`, `plan-prompt.ts`), and the
+evidence packet, generated answers, server checks, one repair, deterministic fallback, and
+`POST /api/question` (#13: `src/answer/`). `search_context` follows.
 
 ```mermaid
 flowchart TD
@@ -45,6 +46,15 @@ flowchart TD
   `from <= t < to`.
 - Excerpts are sliced from Postgres chunk text by the spans on EVIDENCED_BY edges; a mismatch between
   the graph and the source store fails the request as `unavailable` instead of citing anything.
-- The repair step runs at most once (enforced in code).
+- The repair step runs at most once (`MAX_REPAIRS` in `src/answer/generate.ts`); a provider error is
+  not repaired. Failing that, the answer is the deterministic rendering of packet facts, which
+  passes the checks by construction.
+- The answer model sees only the evidence packet: deterministic facts (each with its own summary,
+  entities, choices, dates, citations, unknown fields, conflict group) and numbered citations.
+- Checks: cited facts/citations exist; citations support the item's facts; names, choices, and
+  dates in an item come from its facts; factual items cite evidence; all main facts covered; no
+  one-sided conflict; no asserted rationale or decider the sources lack. They reduce unsupported
+  output; they do not prove entailment.
+- The public response never includes prompts, raw plans, or model output that failed checks.
 - Outcomes: `answered`, `partial`, `needs_clarification`, `conflicting_evidence`,
   `insufficient_evidence`, `unavailable`.

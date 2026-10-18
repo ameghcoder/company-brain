@@ -31,7 +31,7 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | `src/graph/` | Build snapshot, projection, integrity checks, activation, ownership intervals |
 | `src/graph/queries.ts` | Fixed, parameterised Cypher read templates |
 | `src/retrieve/` | Question planning and resolution (`ask.ts`), request pinning, graph tools, evidence hydration, alias resolution, `qa_logs` |
-| `src/answer/` | Deterministic rendering of verified tool results |
+| `src/answer/` | Evidence packet, answer prompt and checks, one repair, deterministic fallback, public response; tool-result rendering |
 | `src/eval/` | Expected-answer comparison and eval runner (reports in `eval/reports/`, gitignored) |
 | `src/test-support/` | Isolated `*_test` database for integration tests |
 | `fixtures/lumen-freight/` | Synthetic company sources, reviewed claims, independent expected answers |

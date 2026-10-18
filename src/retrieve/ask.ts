@@ -1,5 +1,7 @@
 import type pg from "pg";
 import { z } from "zod";
+import { buildEvidencePacket, type EvidencePacket } from "@/answer/evidence-packet";
+import { generateAnswer, type GeneratedAnswer } from "@/answer/generate";
 import type { Outcome, ToolResponse } from "@/contracts/graph-tools";
 import { PLAN_SCHEMA_VERSION, planJsonSchema, planSchema, type Plan, type PlanStep } from "@/contracts/planning";
 import { readRegistryEntities } from "@/extract/extraction.db";
@@ -53,9 +55,13 @@ export type QuestionResult = {
   planner: { model: string; served_model: string | null; prompt_version: string; schema_version: string };
   timings_ms: Record<string, number>;
   qa_log_id: number | null;
+  // Internal: the facts the answer may state. The public response exposes only cited parts.
+  packet: EvidencePacket | null;
+  answer: GeneratedAnswer | null;
 };
 
-export type AskDependencies = RunOptions & { planner: StructuredModel; topics: TopicRegistry; timezone: string };
+// Without an answerer the answer is the deterministic rendering of the packet.
+export type AskDependencies = RunOptions & { planner: StructuredModel; answerer?: StructuredModel | null; topics: TopicRegistry; timezone: string };
 
 // Question -> one planning call -> deterministic resolution -> at most three fixed graph tools on
 // one pinned build. Without a valid plan nothing is answered.
@@ -78,6 +84,8 @@ export async function askQuestion(pool: pg.Pool, rawInput: unknown, deps: AskDep
     planner,
     timings_ms: {},
     qa_log_id: null,
+    packet: null,
+    answer: null,
   };
 
   const entities = await readRegistryEntities(pool);
@@ -136,6 +144,19 @@ export async function askQuestion(pool: pg.Pool, rawInput: unknown, deps: AskDep
       if (pinned.ok) {
         result.steps = pinned.value;
         result.outcome = combineOutcomes(pinned.value.map((step) => step.outcome), resolved.truncated);
+        if (result.outcome !== "unavailable" && result.outcome !== "needs_clarification") {
+          const answerStarted = Date.now();
+          result.packet = buildEvidencePacket({
+            question: input.question,
+            asOfLocal: toLocalTimePoint(asOf, deps.timezone).value,
+            buildId: result.build_id,
+            steps: result.steps,
+            names: new Map(entities.map((entity) => [entity.id, entity.name])),
+            timezone: deps.timezone,
+          });
+          result.answer = await generateAnswer(result.packet, deps.answerer ?? null, entities);
+          result.timings_ms.answer = Date.now() - answerStarted;
+        }
       } else {
         result.outcome = "unavailable";
         result.notes.push(pinned.note);
@@ -155,7 +176,16 @@ export async function askQuestion(pool: pg.Pool, rawInput: unknown, deps: AskDep
       rawPlan,
       resolved: resolved ?? null,
       retrieved: retrievedIds(result.steps),
-      answer: null,
+      answer: result.answer && result.packet
+        ? {
+            source: result.answer.source,
+            prompt_version: result.answer.prompt_version,
+            schema_version: result.answer.schema_version,
+            attempts: result.answer.attempts,
+            items: result.answer.answer.items,
+            packet: { fact_ids: result.packet.facts.map((fact) => fact.fact_id), citation_ids: result.packet.citations.map((c) => c.citation_id), truncated: result.packet.truncated },
+          }
+        : null,
       timingsMs: result.timings_ms,
       error,
     });

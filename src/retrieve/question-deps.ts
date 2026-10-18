@@ -5,12 +5,25 @@ import { readTopicRegistry } from "@/ingest/registry";
 import { openAiStructuredModel } from "@/provider/openai-structured";
 import type { AskDependencies } from "@/retrieve/ask";
 
+let cached: Promise<AskDependencies> | undefined;
+
+// The API reuses one set of dependencies per server process.
+export function sharedQuestionDependencies(): Promise<AskDependencies> {
+  cached ??= liveQuestionDependencies().catch((error) => {
+    cached = undefined;
+    throw error;
+  });
+  return cached;
+}
+
 // Live dependencies for answering questions: the planning model plus the company's topic
 // registry and timezone. Planning needs only light reasoning; low effort keeps it fast.
 export async function liveQuestionDependencies(): Promise<AskDependencies> {
   const manifest = await loadManifest(DEFAULT_FIXTURE_ROOT);
+  const config = providerConfig();
   return {
-    planner: openAiStructuredModel(providerConfig(), { reasoningEffort: "low", maxCompletionTokens: 4_000 }),
+    planner: openAiStructuredModel(config, { reasoningEffort: "low", maxCompletionTokens: 4_000 }),
+    answerer: openAiStructuredModel(config, { reasoningEffort: "low", maxCompletionTokens: 8_000 }),
     topics: await readTopicRegistry(manifest),
     timezone: manifest.company.timezone,
   };

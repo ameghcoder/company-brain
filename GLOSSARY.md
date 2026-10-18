@@ -93,6 +93,13 @@ A specific question back to the user when a name, topic, or project fits several
 **Evidence packet**:
 The bounded set of graph facts, paths, conflicts, and hydrated excerpts given to the answer model for one question.
 
+**Answer item**:
+One or two sentences of a generated answer, with the packet facts it states and the citations supporting them.
+
+**Deterministic answer**:
+The fallback answer: each packet fact stated in its own verified words with its own citations.
+_Avoid_: Template answer
+
 **Effective time**:
 When a claim takes effect in the business. Distinct from recorded time, when the source recorded it.
 
