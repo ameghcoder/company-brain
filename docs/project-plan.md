@@ -7,18 +7,23 @@ Architecture: [architecture.md](architecture.md).
 
 | Label | Milestone | State |
 |---|---|---|
-| LOC-1 | Bootstrap: scaffold, local Postgres + FalkorDB, connectivity smoke checks | Done on review branch, tracked in GitHub issue #1 (provider access not verified) |
-| LOC-2 | Dataset and graph vertical slice | Not started |
+| LOC-1 | Bootstrap: scaffold, local Postgres + FalkorDB, connectivity smoke checks | Done (#1, merged); provider access not verified (#2) |
+| LOC-2 | Dataset and graph vertical slice | Done on review branch: #4, #5, #6 |
 | LOC-3 | Real ingestion and extraction | Not started |
 | LOC-4 | Natural-language questions and answers | Not started |
 | LOC-5 | UI, verification, submission | Not started |
 
-## LOC-1 Bootstrap (current)
+## LOC-1 Bootstrap (done)
 
 Scope and evidence: GitHub issue #1 and [dev-environment.md](dev-environment.md). Open follow-up: model
 provider access is **not verified** until a working `OPENAI_AUTH_MODE` configuration exists (GitHub issue #2).
 
-## LOC-2 Dataset and graph vertical slice
+## LOC-2 Dataset and graph vertical slice (done)
+
+Delivered as three issues, each opened just before its work: (1) dataset, schema, and seeding
+(#4); (2) fresh-graph build, checks, and activation (#5); (3) fixed graph tools and evaluation against the
+expected answers (#6). All 21 expected-answer cases pass. LOC-2 includes the minimal deterministic ingestion the seeded claims need; LOC-3
+adds LLM extraction, review reports, and embeddings. Search (`search_context`) waits for embeddings.
 
 - Synthetic company: 2-3 projects, ~8-12 documents/meetings covering a decision replacement, ownership
   transfer, unapproved proposal, ambiguous alias, future-effective change, conflict, and a decision
@@ -45,6 +50,7 @@ provider access is **not verified** until a working `OPENAI_AUTH_MODE` configura
 - One screen: question input, answer, vertical timeline, evidence/graph panel (one renderer).
 - Request limits, read-only public demo, `eval` report, README, AI-assistant disclosure, recording.
 - Deployment gets its own acceptance boundary; nothing is deployed before then.
+- Graph retention: prune old build graphs once no pinned request can still use them.
 
 ## Ideas parked outside this build
 

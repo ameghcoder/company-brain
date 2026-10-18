@@ -1,0 +1,188 @@
+{
+  "about": "Expected answers written by hand from the source documents, independently of the reviewed claims file and of any extractor or graph output. They reference entity IDs, document IDs, and decision choices only, never claim IDs. Times are ISO instants with offsets; America/New_York is UTC-4 until 2026-11-01 and UTC-5 after.",
+  "as_of": "2026-10-18T12:00:00-04:00",
+  "cases": [
+    {
+      "id": "q1-atlas-provider-changes-this-month",
+      "question": "What changed in the Atlas project's payments provider this month?",
+      "request": { "intent": "changes", "project": "proj-atlas", "topic": "payments.provider", "from": "2026-10-01T00:00:00-04:00", "to": "2026-11-01T00:00:00-04:00" },
+      "expect": {
+        "outcome": "answered",
+        "decision_replacements": [
+          {
+            "from_choice": "Braintree",
+            "to_choice": "Stripe",
+            "effective_date": "2026-10-06",
+            "evidence_documents": ["atlas-provider-review-2026-10-02"],
+            "predecessor_evidence_documents": ["atlas-adr-001-payments-provider"]
+          }
+        ],
+        "must_not_mention_choices": ["Sift"]
+      }
+    },
+    {
+      "id": "q2-why-provider-replaced",
+      "question": "Why did the team replace the earlier provider decision, and where was that decided?",
+      "request": { "intent": "explain", "project": "proj-atlas", "topic": "payments.provider", "at": "2026-10-18T12:00:00-04:00" },
+      "expect": {
+        "outcome": "answered",
+        "choice": "Stripe",
+        "status": "current",
+        "decided_date": "2026-10-02",
+        "effective_date": "2026-10-06",
+        "decided_by": "p-dana-ortiz",
+        "decided_in_document": "atlas-provider-review-2026-10-02",
+        "rationale_known": true,
+        "rationale_evidence_documents": ["atlas-provider-review-2026-10-02"],
+        "rationale_mentions": ["multi-currency payouts"],
+        "supersedes_choices": ["Braintree"]
+      }
+    },
+    {
+      "id": "q3a-migration-owner-today",
+      "question": "Who owns the Atlas migration today?",
+      "request": { "intent": "owner", "project": "proj-atlas", "role": "migration.owner", "at": "2026-10-18T12:00:00-04:00" },
+      "expect": {
+        "outcome": "answered",
+        "assignees": ["p-marcus-lee"],
+        "evidence_documents": ["atlas-migration-handoff"],
+        "previous_assignee": "p-priya-raman"
+      }
+    },
+    {
+      "id": "q3b-migration-owner-before-oct-15",
+      "question": "Who owned the Atlas migration before October 15?",
+      "request": { "intent": "owner", "project": "proj-atlas", "role": "migration.owner", "at": "2026-10-14T23:59:00-04:00" },
+      "expect": { "outcome": "answered", "assignees": ["p-priya-raman"], "evidence_documents": ["assignments"] }
+    },
+    {
+      "id": "q3c-migration-owner-at-handoff-boundary",
+      "question": "Who owned the Atlas migration at the start of October 15?",
+      "request": { "intent": "owner", "project": "proj-atlas", "role": "migration.owner", "at": "2026-10-15T00:00:00-04:00" },
+      "expect": { "outcome": "answered", "assignees": ["p-marcus-lee"], "evidence_documents": ["atlas-migration-handoff"] }
+    },
+    {
+      "id": "q4-atlas-timeline",
+      "question": "Show the Atlas decision and ownership timeline with evidence.",
+      "request": { "intent": "timeline", "project": "proj-atlas" },
+      "expect": {
+        "outcome": "answered",
+        "events_in_order": [
+          { "date": "2026-08-12", "type": "decision", "choice": "Braintree", "topic": "payments.provider", "evidence_documents": ["atlas-adr-001-payments-provider"] },
+          { "date": "2026-09-01", "type": "ownership_start", "assignee": "p-priya-raman", "role": "migration.owner", "evidence_documents": ["assignments"] },
+          { "date": "2026-09-03", "type": "proposal", "choice": "Stripe", "topic": "payments.provider", "evidence_documents": ["atlas-sync-2026-09-03"] },
+          { "date": "2026-10-02", "type": "decision", "choice": "Stripe", "topic": "payments.provider", "evidence_documents": ["atlas-provider-review-2026-10-02"] },
+          { "date": "2026-10-05", "type": "decision", "choice": "Sift", "topic": "payments.fraud_screening", "evidence_documents": ["atlas-fraud-screening"] },
+          { "date": "2026-10-06", "type": "replacement", "from_choice": "Braintree", "to_choice": "Stripe", "topic": "payments.provider", "evidence_documents": ["atlas-provider-review-2026-10-02"] },
+          { "date": "2026-10-15", "type": "ownership_transfer", "from_assignee": "p-priya-raman", "assignee": "p-marcus-lee", "role": "migration.owner", "evidence_documents": ["atlas-migration-handoff"] }
+        ]
+      }
+    },
+    {
+      "id": "q5-absent-subject",
+      "question": "What was decided about the CRM vendor?",
+      "request": { "intent": "explain", "project": "proj-atlas", "topic": "crm.vendor", "at": "2026-10-18T12:00:00-04:00" },
+      "expect": { "outcome": "insufficient_evidence" }
+    },
+    {
+      "id": "atlas-provider-before-switch",
+      "question": "What was the Atlas payments provider on October 5?",
+      "request": { "intent": "explain", "project": "proj-atlas", "topic": "payments.provider", "at": "2026-10-05T12:00:00-04:00" },
+      "expect": { "outcome": "answered", "choice": "Braintree", "status": "current", "decided_by": "p-dana-ortiz", "rationale_known": true }
+    },
+    {
+      "id": "atlas-proposal-is-not-a-decision",
+      "question": "What was the Atlas payments provider on September 10?",
+      "request": { "intent": "explain", "project": "proj-atlas", "topic": "payments.provider", "at": "2026-09-10T12:00:00-04:00" },
+      "expect": { "outcome": "answered", "choice": "Braintree", "status": "current", "pending_proposal_choices": ["Stripe"] }
+    },
+    {
+      "id": "atlas-fraud-is-a-separate-topic",
+      "question": "What does Atlas use for fraud screening?",
+      "request": { "intent": "explain", "project": "proj-atlas", "topic": "payments.fraud_screening", "at": "2026-10-18T12:00:00-04:00" },
+      "expect": { "outcome": "answered", "choice": "Sift", "status": "current", "supersedes_choices": [] }
+    },
+    {
+      "id": "beacon-analytics-future-switch",
+      "question": "What does Beacon use for product analytics today?",
+      "request": { "intent": "explain", "project": "proj-beacon", "topic": "analytics.provider", "at": "2026-10-18T12:00:00-04:00" },
+      "expect": {
+        "outcome": "answered",
+        "choice": "Mixpanel",
+        "status": "current",
+        "scheduled_replacement": { "choice": "PostHog", "effective_date": "2026-11-01", "evidence_documents": ["beacon-analytics-switch"] }
+      }
+    },
+    {
+      "id": "beacon-analytics-after-switch",
+      "question": "What does Beacon use for product analytics on November 2?",
+      "request": { "intent": "explain", "project": "proj-beacon", "topic": "analytics.provider", "at": "2026-11-02T12:00:00-05:00" },
+      "expect": { "outcome": "answered", "choice": "PostHog", "status": "current", "decided_by": "p-dana-ortiz", "supersedes_choices": ["Mixpanel"] }
+    },
+    {
+      "id": "beacon-release-owner-before-future-handoff",
+      "question": "Who manages Beacon releases today?",
+      "request": { "intent": "owner", "project": "proj-beacon", "role": "release.owner", "at": "2026-10-18T12:00:00-04:00" },
+      "expect": { "outcome": "answered", "assignees": ["p-lena-novak"], "evidence_documents": ["assignments"], "scheduled_successor": "p-sam-okafor" }
+    },
+    {
+      "id": "beacon-release-owner-after-handoff",
+      "question": "Who manages Beacon releases on November 1?",
+      "request": { "intent": "owner", "project": "proj-beacon", "role": "release.owner", "at": "2026-11-01T00:00:00-04:00" },
+      "expect": { "outcome": "answered", "assignees": ["p-sam-okafor"], "evidence_documents": ["beacon-release-plan"], "previous_assignee": "p-lena-novak" }
+    },
+    {
+      "id": "beacon-release-owner-before-records",
+      "question": "Who managed Beacon releases on May 1?",
+      "request": { "intent": "owner", "project": "proj-beacon", "role": "release.owner", "at": "2026-05-01T12:00:00-04:00" },
+      "expect": { "outcome": "insufficient_evidence" }
+    },
+    {
+      "id": "cobalt-pipeline-owner-conflict",
+      "question": "Who owns the Cobalt ingestion pipeline?",
+      "request": { "intent": "owner", "project": "proj-cobalt", "role": "pipeline.owner", "at": "2026-10-18T12:00:00-04:00" },
+      "expect": {
+        "outcome": "conflicting_evidence",
+        "assignees": ["p-jordan-kim", "p-taylor-brooks"],
+        "evidence_documents": ["cobalt-roadmap-q4", "cobalt-standup-2026-09-22"]
+      }
+    },
+    {
+      "id": "cobalt-pipeline-owner-before-conflict",
+      "question": "Who owned the Cobalt ingestion pipeline on September 21?",
+      "request": { "intent": "owner", "project": "proj-cobalt", "role": "pipeline.owner", "at": "2026-09-21T12:00:00-04:00" },
+      "expect": { "outcome": "answered", "assignees": ["p-jordan-kim"], "evidence_documents": ["cobalt-roadmap-q4"] }
+    },
+    {
+      "id": "cobalt-warehouse-team-owner",
+      "question": "Who owns the Cobalt warehouse platform?",
+      "request": { "intent": "owner", "project": "proj-cobalt", "role": "warehouse.owner", "at": "2026-10-18T12:00:00-04:00" },
+      "expect": { "outcome": "answered", "assignees": ["t-data"], "evidence_documents": ["assignments"] }
+    },
+    {
+      "id": "cobalt-warehouse-no-rationale",
+      "question": "Why did Cobalt choose its warehouse platform?",
+      "request": { "intent": "explain", "project": "proj-cobalt", "topic": "warehouse.platform", "at": "2026-10-18T12:00:00-04:00" },
+      "expect": {
+        "outcome": "answered",
+        "choice": "Snowflake",
+        "status": "current",
+        "decided_in_document": "cobalt-warehouse-note",
+        "rationale_known": false,
+        "decided_by": null
+      }
+    },
+    {
+      "id": "alias-alex-is-ambiguous",
+      "question": "What did Alex decide?",
+      "request": { "intent": "resolve_alias", "alias": "Alex", "kind": "person" },
+      "expect": { "outcome": "needs_clarification", "candidates": ["p-alex-chen", "p-alex-rivera"] }
+    },
+    {
+      "id": "alias-marcus-resolves",
+      "question": "What does Marcus own?",
+      "request": { "intent": "resolve_alias", "alias": "marcus", "kind": "person" },
+      "expect": { "outcome": "answered", "candidates": ["p-marcus-lee"] }
+    }
+  ]
+}

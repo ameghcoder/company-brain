@@ -4,7 +4,9 @@ Source of truth for this flow. Read it before changing ingestion, extraction, re
 projection, or activation code, and update it in the same change. Step details:
 [architecture.md §3](../architecture.md#3-ingestion-and-graph-activation-flow).
 
-Status: not implemented yet (planned for LOC-2 and LOC-3 in [project-plan.md](../project-plan.md)).
+Status: parse/version/chunk, structured claims, and the reviewed-fixture seed path exist (LOC-2,
+`src/ingest/`, `src/extract/`). LLM proposals, review reports, and embeddings are LOC-3. Build, check, and
+activation exist in `src/graph/` (`pnpm graph:publish`); builds record `vectors: absent` until LOC-3.
 
 ```mermaid
 flowchart TD
@@ -13,7 +15,9 @@ flowchart TD
     C --> D{"Structured record or prose?"}
     D -->|Structured| E["Deterministic claim proposals"]
     D -->|Prose| F["LLM claim proposals"]
+    D -->|"Prose, LOC-2 seed path"| R["Reviewed fixture claims: document + exact quote"]
     E --> G["Resolve IDs and validate evidence"]
+    R --> G
     F --> G
     G --> H{"Approval and consistency checks"}
     H -->|Uncertain or conflicting| I["Review, correct, or exclude"]
@@ -29,6 +33,12 @@ flowchart TD
 
 - Document versions and chunks are immutable; re-ingesting identical content creates nothing new.
 - Structured CSV rows skip the LLM but still pass schema, identity, date, and consistency validation.
+- Reviewed fixture claims are the LOC-2 stand-in for reviewed extraction output. They cite evidence as
+  document + exact quote; seeding resolves each quote to exactly one chunk of the selected version.
+- Seeding is all-or-nothing: one invalid claim rejects the whole set and nothing is written.
 - Only approved claims reach the graph. `review_status` is separate from a decision's business lifecycle.
 - `rebuild-graph` makes no LLM or embedding calls; it reads cached records and vectors from Postgres.
 - Every build goes into a fresh graph; the active pointer moves only after integrity and query checks pass.
+- A build fails fast if an approved claim cites a chunk outside the selected versions (re-seed claims).
+- Ownership ends only at a stated end or an evidenced handoff; overlapping exclusive assignments are
+  reported as conflicts in the build's integrity record, not resolved.

@@ -1,0 +1,4 @@
+[10:00] Priya Raman: Quick sync on Atlas. The Braintree integration is live in the pilot.
+[10:02] Alex Chen: Braintree sent notice that processing fees go up in November. If that happens we might switch to Stripe.
+[10:04] Priya Raman: Let's not decide anything today. Alex, please put together a fee comparison.
+[10:05] Marcus Lee: I can help with the Stripe sandbox if we go that way.

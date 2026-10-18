@@ -25,6 +25,12 @@ _Avoid_: Passage, snippet
 A structured, evidence-bearing assertion proposed from a source, such as a decision, ownership assignment, or supersession.
 _Avoid_: Fact (until approved), extraction
 
+**Structured claim**:
+A claim derived deterministically from a structured record, such as a row of the assignments CSV.
+
+**Reviewed fixture claim**:
+A hand-reviewed claim in the fixture set that cites its evidence as a document and an exact quote; the stand-in for reviewed extraction output until extraction exists.
+
 **Review status**:
 Whether a claim is `pending`, `approved`, or `rejected` for use in the graph. Independent of a decision's lifecycle.
 
@@ -42,6 +48,16 @@ _Avoid_: Override, update
 **Ownership assignment**:
 A claim that a person or team holds a role for a project scope over a half-open effective interval.
 _Avoid_: Owner field
+
+**Handoff**:
+Explicit evidence that one ownership assignment replaces an earlier one for the same project and role; the only way an assignment gets an end date it does not state itself.
+_Avoid_: Reassignment (when no handoff is evidenced)
+
+**Exclusive role**:
+A project role that one person or team holds at a time, so overlapping assignments without a handoff are a conflict.
+
+**Choice**:
+What a decision or proposal selects for its topic, such as "Stripe" for `payments.provider`.
 
 **Conflict**:
 Two approved claims that cannot both hold; reported with both sources rather than resolved by recency.

@@ -1,0 +1,5 @@
+[14:00] Dana Ortiz: This is the provider review for Atlas. Alex, what did the comparison show?
+[14:03] Alex Chen: Stripe's quote is about 0.4 points lower than Braintree's new pricing.
+[14:05] Marcus Lee: The bigger issue is the EU launch. Our Braintree plan cannot do multi-currency payouts, and Stripe can.
+[14:08] Dana Ortiz: Decision: Atlas moves its payments provider from Braintree to Stripe, effective October 6. Braintree stays read-only for refunds until December.
+[14:09] Priya Raman: Understood. I'll update the migration plan.

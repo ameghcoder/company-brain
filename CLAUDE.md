@@ -7,10 +7,10 @@ company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.
 
 ## Current milestone and scope
 
-- **Now: Milestone 1 (LOC-1) bootstrap only**: scaffold, local Postgres + FalkorDB, connectivity smoke
-  checks. Tracked in GitHub issue #1.
-- Do **not** start graph business logic, ingestion, LLM extraction, answer generation, or the final UI
-  until the owner asks for the next milestone. Plan: [docs/project-plan.md](docs/project-plan.md).
+- **Now: Milestone 2 (LOC-2) dataset and graph vertical slice**, delivered as three issues opened in turn
+  (dataset/schema/seeding #4, graph build and activation #5, fixed graph tools #6). LOC-1 is done.
+- Do **not** start LLM extraction, embeddings, natural-language answering, or the final UI (LOC-3 and
+  later) until the owner asks for the next milestone. Plan: [docs/project-plan.md](docs/project-plan.md).
 - Small tasks inside an authorized milestone don't need separate approval. Stop at the milestone boundary
   and report.
 - New ideas go into `docs/project-plan.md` as `LOC-n` items, not into GitHub issues or code.
@@ -89,12 +89,19 @@ pnpm bootstrap        # Docker + services + locked deps + migrations (safe to re
 pnpm check            # services smoke, typecheck, lint, build, bundle secret scan, HTTP check
 pnpm check --quick    # skip build and HTTP check
 pnpm check:services   # Postgres + FalkorDB real-service smoke checks only
+pnpm test             # unit tests + integration tests against a separate *_test database
+pnpm data:load        # registry + ingest + reviewed claims into the dev database (idempotent)
+pnpm graph:publish    # fresh graph build -> integrity checks -> activate only if all pass
+pnpm eval             # all independent expected-answer cases against the active build (JSON report)
+pnpm demo             # the demo questions as structured requests, rendered with evidence
 pnpm typecheck && pnpm lint && pnpm build
 CHECK_PROVIDER=1 pnpm check   # adds paid minimal provider check (needs valid provider config)
 ```
 
-Smoke checks hit the real services. Do not replace them with mocked database tests. There is no unit
-test runner yet; add one (and list it here) when the first domain logic arrives.
+Tests use `node:test` via `tsx` (`src/**/*.test.ts`). Pure logic gets unit tests. Anything touching
+Postgres or FalkorDB runs against the real services in the `*_test` database (`useFreshTestDatabase`).
+Never mock the databases. Expected answers in `fixtures/lumen-freight/expected/` are written from the
+sources by hand and must never be regenerated from claims or graph output.
 
 ## Code conventions
 

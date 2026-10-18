@@ -1,0 +1,14 @@
+entity_id,kind,name,team_id,aliases
+t-payments,team,Payments Platform,,Payments team;Payments
+t-mobile,team,Mobile,,Mobile team
+t-data,team,Data Platform,,Data team
+t-eng-leadership,team,Engineering Leadership,,
+p-dana-ortiz,person,Dana Ortiz,t-eng-leadership,Dana
+p-priya-raman,person,Priya Raman,t-payments,Priya;P. Raman
+p-marcus-lee,person,Marcus Lee,t-payments,Marcus
+p-alex-chen,person,Alex Chen,t-payments,Alex;A. Chen
+p-alex-rivera,person,Alex Rivera,t-mobile,Alex;A. Rivera
+p-lena-novak,person,Lena Novak,t-mobile,Lena
+p-sam-okafor,person,Sam Okafor,t-mobile,Sam
+p-jordan-kim,person,Jordan Kim,t-data,Jordan
+p-taylor-brooks,person,Taylor Brooks,t-data,Taylor

@@ -1,0 +1,3 @@
+[09:30] Dana Ortiz: Quick reminder for everyone: Taylor Brooks owns the Cobalt ingestion pipeline.
+[09:31] Taylor Brooks: Right, I'll run the pipeline backlog from here.
+[09:33] Jordan Kim: The Snowflake trial account is ready.
