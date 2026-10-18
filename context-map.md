@@ -10,6 +10,9 @@ Where things are documented. Start with `CLAUDE.md` for working rules.
 | Query and answer flow (diagram) | [docs/design-flow/query.md](docs/design-flow/query.md) |
 | Decisions and their reasons | [docs/adr/](docs/adr/) |
 | Milestones and parked ideas (`LOC-n`) | [docs/project-plan.md](docs/project-plan.md) |
+| Acceptance checks mapped to tests, latest results | [docs/verification.md](docs/verification.md) |
+| How AI was used to build and run it | [docs/ai-disclosure.md](docs/ai-disclosure.md) |
+| Overview, setup, demo questions (for reviewers) | [README.md](README.md) |
 | Setup, checks, versions, database lifecycle | [docs/dev-environment.md](docs/dev-environment.md) |
 | Issue workflow, commits, closing rules | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md) |
 | How skills read domain docs | [docs/agents/domain.md](docs/agents/domain.md) |

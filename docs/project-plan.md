@@ -11,7 +11,7 @@ Architecture: [architecture.md](architecture.md).
 | LOC-2 | Dataset and graph vertical slice | Done on review branch: #4, #5, #6 |
 | LOC-3 | Real ingestion and extraction | Pipeline done (#8, #9); corpus embedded; real extraction runs not yet requested |
 | LOC-4 | Natural-language questions and answers | Done and merged: #12, #13, #14 (PR #15) |
-| LOC-5 | UI, verification, submission | In progress: one-screen UI #16, limits and retention #17 |
+| LOC-5 | UI, verification, submission | Built: UI #16, limits and retention #17, README/disclosure/verification #18; recording and deployment are the owner's |
 
 ## LOC-1 Bootstrap (done)
 
@@ -68,7 +68,7 @@ or insufficient evidence. Idea for later: a fixed `get_assignments_for_person` t
 
 Planned as issues opened in turn: (1) one-screen UI (#16); (2) public-demo limits (request rate and
 concurrency caps on the paid question API) and graph retention (#17); (3) README, AI-assistant disclosure,
-final verification report. The recording is the owner's; deployment needs its own approval.
+final verification report (#18). The recording is the owner's; deployment needs its own approval.
 The demo's "today" moves with the real date, so answers about "now" change after 2026-11-01 (Beacon's
 scheduled switch). Idea: a configured default "as of" date for the public demo.
 

@@ -8,7 +8,8 @@ company, batch ingestion, read-only demo. Doc map: [context-map.md](context-map.
 ## Current milestone and scope
 
 - **Now: Milestone 5 (LOC-5) UI, verification, submission**, as issues opened in turn: one-screen
-  UI (#16); public-demo limits and graph retention (#17); README, disclosure, and final verification.
+  UI (#16); public-demo limits and graph retention (#17); README, disclosure, and verification (#18,
+  `docs/verification.md`; keep its results table current when checks change).
   Provider access works (#2) in `api_key` mode. Do **not** deploy without the owner's approval.
 - LOC-1 to LOC-4 are done and merged (LOC-3 without real extraction runs, not yet requested).
   Plan: [docs/project-plan.md](docs/project-plan.md).
